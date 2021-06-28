@@ -37,7 +37,7 @@ dbinstallmethod=1
 
 version() {
   echo "version: 2.4"
-  echo "updated date: 2021-04-01"
+  echo "updated date: 2021-05-18"
 }
 
 Show_Help() {
@@ -56,6 +56,7 @@ Show_Help() {
   --php_extensions [ext name] Install PHP extensions, include zendguardloader,ioncube,
                               sourceguardian,imagick,gmagick,fileinfo,imap,ldap,calendar,phalcon,
                               yaf,yar,redis,memcached,memcache,mongodb,swoole,xdebug
+  --node                      Install Nodejs
   --tomcat_option [1-4]       Install Tomcat version
   --jdk_option [1-4]          Install JDK version
   --db_option [1-14]          Install DB version
@@ -72,7 +73,7 @@ Show_Help() {
   "
 }
 ARG_NUM=$#
-TEMP=`getopt -o hvV --long help,version,nginx_option:,apache,apache_mode_option:,apache_mpm_option:,php_option:,mphp_ver:,mphp_addons,phpcache_option:,php_extensions:,tomcat_option:,jdk_option:,db_option:,dbrootpwd:,dbinstallmethod:,pureftpd,redis,memcached,phpmyadmin,python,ssh_port:,iptables,reboot -- "$@" 2>/dev/null`
+TEMP=`getopt -o hvV --long help,version,nginx_option:,apache,apache_mode_option:,apache_mpm_option:,php_option:,mphp_ver:,mphp_addons,phpcache_option:,php_extensions:,node,tomcat_option:,jdk_option:,db_option:,dbrootpwd:,dbinstallmethod:,pureftpd,redis,memcached,phpmyadmin,python,ssh_port:,iptables,reboot -- "$@" 2>/dev/null`
 [ $? != 0 ] && echo "${CWARNING}ERROR: unknown argument! ${CEND}" && Show_Help && exit 1
 eval set -- "${TEMP}"
 while :; do
@@ -138,6 +139,10 @@ while :; do
       [ -n "`echo ${php_extensions} | grep -w mongodb`" ] && pecl_mongodb=1
       [ -n "`echo ${php_extensions} | grep -w swoole`" ] && pecl_swoole=1
       [ -n "`echo ${php_extensions} | grep -w xdebug`" ] && pecl_xdebug=1
+      ;;
+    --node)
+      node_flag=y; shift 1
+      [ -e "${node_install_dir}/bin/node" ] && { echo "${CWARNING}Nodejs already installed! ${CEND}"; unset node_flag; }
       ;;
     --tomcat_option)
       tomcat_option=$2; shift 2
@@ -308,10 +313,10 @@ if [ ${ARG_NUM} == 0 ]; then
         # Tomcat
         while :; do echo
           echo 'Please select tomcat server:'
-          echo -e "\t${CMSG}1${CEND}. Install Tomcat-9"
-          echo -e "\t${CMSG}2${CEND}. Install Tomcat-8"
-          echo -e "\t${CMSG}3${CEND}. Install Tomcat-7"
-          echo -e "\t${CMSG}4${CEND}. Install Tomcat-6"
+          echo -e "\t${CMSG}1${CEND}. Install Tomcat-10"
+          echo -e "\t${CMSG}2${CEND}. Install Tomcat-9"
+          echo -e "\t${CMSG}3${CEND}. Install Tomcat-8"
+          echo -e "\t${CMSG}4${CEND}. Install Tomcat-7"
           echo -e "\t${CMSG}5${CEND}. Do not install"
           read -e -p "Please input a number:(Default 5 press Enter) " tomcat_option
           tomcat_option=${tomcat_option:-5}
@@ -319,7 +324,7 @@ if [ ${ARG_NUM} == 0 ]; then
             echo "${CWARNING}input error! Please only input number 1~5${CEND}"
           else
             [ "${tomcat_option}" != '5' -a -e "$tomcat_install_dir/conf/server.xml" ] && { echo "${CWARNING}Tomcat already installed! ${CEND}" ; unset tomcat_option; }
-            if [ "${tomcat_option}" == '1' ]; then
+            if [[ "${tomcat_option}" =~ ^[1-2]$ ]]; then
               while :; do echo
                 echo 'Please select JDK version:'
                 echo -e "\t${CMSG}1${CEND}. Install JDK-11.0"
@@ -332,7 +337,7 @@ if [ ${ARG_NUM} == 0 ]; then
                   break
                 fi
               done
-            elif [ "${tomcat_option}" == '2' ]; then
+            elif [ "${tomcat_option}" == '3' ]; then
               while :; do echo
                 echo 'Please select JDK version:'
                 echo -e "\t${CMSG}1${CEND}. Install JDK-11.0"
@@ -346,7 +351,7 @@ if [ ${ARG_NUM} == 0 ]; then
                   break
                 fi
               done
-            elif [ "${tomcat_option}" == '3' ]; then
+            elif [ "${tomcat_option}" == '4' ]; then
               while :; do echo
                 echo 'Please select JDK version:'
                 echo -e "\t${CMSG}2${CEND}. Install JDK-1.8"
@@ -356,19 +361,6 @@ if [ ${ARG_NUM} == 0 ]; then
                 jdk_option=${jdk_option:-3}
                 if [[ ! ${jdk_option} =~ ^[2-4]$ ]]; then
                   echo "${CWARNING}input error! Please only input number 2~4${CEND}"
-                else
-                  break
-                fi
-              done
-            elif [ "${tomcat_option}" == '4' ]; then
-              while :; do echo
-                echo 'Please select JDK version:'
-                echo -e "\t${CMSG}3${CEND}. Install JDK-1.7"
-                echo -e "\t${CMSG}4${CEND}. Install JDK-1.6"
-                read -e -p "Please input a number:(Default 4 press Enter) " jdk_option
-                jdk_option=${jdk_option:-4}
-                if [[ ! ${jdk_option} =~ ^[3-4]$ ]]; then
-                  echo "${CWARNING}input error! Please only input number 3~4${CEND}"
                 else
                   break
                 fi
@@ -656,6 +648,17 @@ if [ ${ARG_NUM} == 0 ]; then
     done
   fi
 
+  # check Nodejs
+  while :; do echo
+    read -e -p "Do you want to install Nodejs? [y/n]: " node_flag
+    if [[ ! ${node_flag} =~ ^[y,n]$ ]]; then
+      echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+    else
+      [ "${node_flag}" == 'y' -a -e "${node_install_dir}/bin/node" ] && { echo "${CWARNING}Nodejs already installed! ${CEND}"; unset node_flag; }
+      break
+    fi
+  done
+
   # check Pureftpd
   while :; do echo
     read -e -p "Do you want to install Pure-FTPd? [y/n]: " pureftpd_flag
@@ -712,10 +715,11 @@ fi
 # install wget gcc curl python
 if [ ! -e ~/.oneinstack ]; then
   downloadDepsSrc=1
-  [ "${PM}" == 'apt-get' ] && apt-get -y update
+  [ "${PM}" == 'apt-get' ] && apt-get -y update > /dev/null
   [ "${PM}" == 'yum' ] && yum clean all
   ${PM} -y install wget gcc curl python
   [ "${CentOS_ver}" == '8' ] && { yum -y install python36; sudo alternatives --set python /usr/bin/python3; }
+  clear
 fi
 
 # get the IP information
@@ -725,6 +729,7 @@ IPADDR_COUNTRY=$(./include/get_ipaddr_state.py ${PUBLIC_IPADDR})
 
 # Check download source packages
 . ./include/check_download.sh
+[ "${armplatform}" == "y" ] && dbinstallmethod=2
 checkDownload 2>&1 | tee -a ${oneinstack_dir}/install.log
 
 # del openssl for jcloud
@@ -737,7 +742,7 @@ checkDownload 2>&1 | tee -a ${oneinstack_dir}/install.log
 if [ ! -e ~/.oneinstack ]; then
   # Check binary dependencies packages
   . ./include/check_sw.sh
-  case "${OS}" in
+  case "${LikeOS}" in
     "CentOS")
       installDepsCentOS 2>&1 | tee ${oneinstack_dir}/install.log
       . include/init_CentOS.sh 2>&1 | tee -a ${oneinstack_dir}/install.log
@@ -773,7 +778,7 @@ fi
 # Database
 case "${db_option}" in
   1)
-    [ "${OS}" == 'CentOS' ] && [ ${CentOS_ver} -le 6 >/dev/null 2>&1 ] && dbinstallmethod=1 && checkDownload
+    [ "${LikeOS}" == 'CentOS' ] && [ ${CentOS_ver} -le 6 >/dev/null 2>&1 ] && dbinstallmethod=1 && checkDownload
     . include/mysql-8.0.sh
     Install_MySQL80 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
@@ -806,8 +811,8 @@ case "${db_option}" in
     Install_MariaDB55 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
   9)
-    [ "${OS}" == 'CentOS' ] && [ ${CentOS_ver} -le 6 >/dev/null 2>&1 ] && dbinstallmethod=1 && checkDownload
-    [ "${OS}" == 'CentOS' ] && [ "${CentOS_ver}" == '8' ] && dbinstallmethod=2 && checkDownload
+    [ "${LikeOS}" == 'CentOS' ] && [ ${CentOS_ver} -le 6 >/dev/null 2>&1 ] && dbinstallmethod=1 && checkDownload
+    [ "${LikeOS}" == 'CentOS' ] && [ "${CentOS_ver}" == '8' ] && dbinstallmethod=2 && checkDownload
     . include/percona-8.0.sh
     Install_Percona80 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
@@ -1070,22 +1075,28 @@ esac
 
 case "${tomcat_option}" in
   1)
+    . include/tomcat-10.sh
+    Install_Tomcat10 2>&1 | tee -a ${oneinstack_dir}/install.log
+    ;;
+  2)
     . include/tomcat-9.sh
     Install_Tomcat9 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
-  2)
+  3)
     . include/tomcat-8.sh
     Install_Tomcat8 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
-  3)
+  4)
     . include/tomcat-7.sh
     Install_Tomcat7 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
-  4)
-    . include/tomcat-6.sh
-    Install_Tomcat6 2>&1 | tee -a ${oneinstack_dir}/install.log
-    ;;
 esac
+
+# Nodejs
+if [ "${node_flag}" == 'y' ]; then
+  . include/node.sh
+  Install_Node 2>&1 | tee -a ${oneinstack_dir}/install.log
+fi
 
 # Pure-FTPd
 if [ "${pureftpd_flag}" == 'y' ]; then
