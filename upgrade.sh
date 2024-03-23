@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -12,7 +12,7 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 clear
 printf "
 #######################################################################
-#       OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+      #
+#       OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+      #
 #              Upgrade Software versions for OneinStack               #
 #       For more information please visit https://oneinstack.com      #
 #######################################################################
@@ -37,9 +37,8 @@ pushd ${oneinstack_dir} > /dev/null
 . ./include/upgrade_phpmyadmin.sh
 . ./include/upgrade_oneinstack.sh
 
-# get the IP information
-PUBLIC_IPADDR=$(./include/get_public_ipaddr.py)
-IPADDR_COUNTRY=$(./include/get_ipaddr_state.py ${PUBLIC_IPADDR})
+# get the out ip country
+OUTIP_STATE=$(./include/ois.${ARCH} ip_state)
 
 Show_Help() {
   echo

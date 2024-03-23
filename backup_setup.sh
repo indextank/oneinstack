@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -12,7 +12,7 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 clear
 printf "
 #######################################################################
-#       OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+      #
+#       OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+      #
 #                     Setup the backup parameters                     #
 #       For more information please visit https://oneinstack.com      #
 #######################################################################
@@ -28,7 +28,6 @@ pushd ${oneinstack_dir} > /dev/null
 . ./include/check_os.sh
 . ./include/check_dir.sh
 . ./include/download.sh
-. ./include/python.sh
 
 while :; do echo
   echo 'Please select your backup destination:'
@@ -182,50 +181,66 @@ fi
 
 if [ -n "`echo ${desc_bk} | grep -w 3`" ]; then
   if [ ! -e "/usr/local/bin/ossutil" ]; then
-    wget -qc https://gosspublic.alicdn.com/ossutil/1.7.3/ossutil${OS_BIT} -O /usr/local/bin/ossutil
+    if [ "${armplatform}" == 'y' ]; then
+      wget -qc https://gosspublic.alicdn.com/ossutil/1.7.16/ossutilarm64 -O /usr/local/bin/ossutil
+    else
+      wget -qc https://gosspublic.alicdn.com/ossutil/1.7.16/ossutil64 -O /usr/local/bin/ossutil
+    fi
     chmod +x /usr/local/bin/ossutil
   fi
   while :; do echo
     echo 'Please select your backup aliyun datacenter:'
-    echo -e "\t ${CMSG}1${CEND}. cn-hangzhou-华东 1 (杭州)         ${CMSG}2${CEND}. cn-shanghai-华东 2 (上海)"
-    echo -e "\t ${CMSG}3${CEND}. cn-qingdao-华北 1 (青岛)          ${CMSG}4${CEND}. cn-beijing-华北 2 (北京)"
-    echo -e "\t ${CMSG}5${CEND}. cn-zhangjiakou-华北 3 (张家口)    ${CMSG}6${CEND}. cn-huhehaote-华北 5(呼和浩特)"
-    echo -e "\t ${CMSG}7${CEND}. cn-shenzhen-华南 1 (深圳)         ${CMSG}8${CEND}. cn-chengdu-西南 1（成都）"
-    echo -e "\t ${CMSG}9${CEND}. cn-hongkong-香港                 ${CMSG}10${CEND}. us-west-美西 1 (硅谷)"
-    echo -e "\t${CMSG}11${CEND}. us-east-美东 1 (弗吉尼亚)        ${CMSG}12${CEND}. ap-southeast-亚太东南 1 (新加坡)"
-    echo -e "\t${CMSG}13${CEND}. ap-southeast-亚太东南 2 (悉尼)   ${CMSG}14${CEND}. ap-southeast-亚太东南 3 (吉隆坡)"
-    echo -e "\t${CMSG}15${CEND}. ap-southeast-亚太东南 5 (雅加达) ${CMSG}16${CEND}. ap-northeast-亚太东北 1 (日本)"
-    echo -e "\t${CMSG}17${CEND}. ap-south-亚太南部 1 (孟买)       ${CMSG}18${CEND}. eu-central-欧洲中部 1 (法兰克福)"
-    echo -e "\t${CMSG}19${CEND}. eu-west-英国（伦敦）             ${CMSG}20${CEND}. me-east-中东东部 1 (迪拜)"
+    echo -e "\t ${CMSG}1${CEND}. cn-hangzhou-华东1 (杭州)          ${CMSG}2${CEND}. cn-shanghai-华东2 (上海)"
+    echo -e "\t ${CMSG}3${CEND}. cn-nanjing-华东5 (南京)           ${CMSG}4${CEND}. cn-fuzhou-华东6 (福州)"
+    echo -e "\t ${CMSG}5${CEND}. cn-qingdao-华北1 (青岛)           ${CMSG}6${CEND}. cn-beijing-华北2 (北京)"
+    echo -e "\t ${CMSG}7${CEND}. cn-zhangjiakou-华北3 (张家口)     ${CMSG}8${CEND}. cn-huhehaote-华北5 (呼和浩特)"
+    echo -e "\t ${CMSG}9${CEND}. cn-wulanchabu-华北6 (乌兰察布)   ${CMSG}10${CEND}. cn-shenzhen-华南1 (深圳)"
+    echo -e "\t${CMSG}11${CEND}. cn-heyuan-华南2 (河源)	          ${CMSG}12${CEND}. cn-guangzhou-华南3 (广州)"
+    echo -e "\t${CMSG}13${CEND}. cn-chengdu-西南1 (成都)          ${CMSG}14${CEND}. cn-hongkong-香港"
+    echo -e "\t${CMSG}15${CEND}. us-west-1-美国 (硅谷)            ${CMSG}16${CEND}. us-east-1-美国 (弗吉尼亚)"
+    echo -e "\t${CMSG}17${CEND}. ap-northeast-1-日本 (东京)       ${CMSG}18${CEND}. ap-northeast-2-韩国 (首尔)"
+    echo -e "\t${CMSG}19${CEND}. ap-southeast-1-新加坡            ${CMSG}20${CEND}. ap-southeast-2-澳大利亚 (悉尼)"
+    echo -e "\t${CMSG}21${CEND}. ap-southeast-3-马来西亚 (吉隆坡) ${CMSG}22${CEND}. ap-southeast-5-印度尼西亚 (雅加达)"
+    echo -e "\t${CMSG}23${CEND}. ap-southeast-6-菲律宾 (马尼拉)   ${CMSG}24${CEND}. ap-southeast-7-泰国 (曼谷)"
+    echo -e "\t${CMSG}25${CEND}. ap-south-1-印度 (孟买)           ${CMSG}26${CEND}. eu-central-1-德国 (法兰克福)"
+    echo -e "\t${CMSG}27${CEND}. eu-west-1-英国 (伦敦)            ${CMSG}28${CEND}. me-east-1-阿联酋 (迪拜)"
     read -e -p "Please input a number:(Default 1 press Enter) " Location
     Location=${Location:-1}
-    if [[ "${Location}" =~ ^[1-9]$|^1[0-9]$|^20$ ]]; then
+    if [[ "${Location}" =~ ^[1-9]$|^1[0-9]$|^2[0-8]$ ]]; then
       break
     else
-      echo "${CWARNING}input error! Please only input number 1~20${CEND}"
+      echo "${CWARNING}input error! Please only input number 1~28${CEND}"
     fi
   done
   [ "${Location}" == '1' ] && Host=oss-cn-hangzhou-internal.aliyuncs.com
   [ "${Location}" == '2' ] && Host=oss-cn-shanghai-internal.aliyuncs.com
-  [ "${Location}" == '3' ] && Host=oss-cn-qingdao-internal.aliyuncs.com
-  [ "${Location}" == '4' ] && Host=oss-cn-beijing-internal.aliyuncs.com
-  [ "${Location}" == '5' ] && Host=oss-cn-zhangjiakou-internal.aliyuncs.com
-  [ "${Location}" == '6' ] && Host=oss-cn-huhehaote-internal.aliyuncs.com
-  [ "${Location}" == '7' ] && Host=oss-cn-shenzhen-internal.aliyuncs.com
-  [ "${Location}" == '8' ] && Host=oss-cn-chengdu-internal.aliyuncs.com
-  [ "${Location}" == '9' ] && Host=oss-cn-hongkong-internal.aliyuncs.com
-  [ "${Location}" == '10' ] && Host=oss-us-west-1-internal.aliyuncs.com
-  [ "${Location}" == '11' ] && Host=oss-us-east-1-internal.aliyuncs.com
-  [ "${Location}" == '12' ] && Host=oss-ap-southeast-1-internal.aliyuncs.com
-  [ "${Location}" == '13' ] && Host=oss-ap-southeast-2-internal.aliyuncs.com
-  [ "${Location}" == '14' ] && Host=oss-ap-southeast-3-internal.aliyuncs.com
-  [ "${Location}" == '15' ] && Host=oss-ap-southeast-5-internal.aliyuncs.com
-  [ "${Location}" == '16' ] && Host=oss-ap-northeast-1-internal.aliyuncs.com
-  [ "${Location}" == '17' ] && Host=oss-ap-south-1-internal.aliyuncs.com
-  [ "${Location}" == '18' ] && Host=oss-eu-central-1-internal.aliyuncs.com
-  [ "${Location}" == '19' ] && Host=oss-eu-west-1-internal.aliyuncs.com
-  [ "${Location}" == '20' ] && Host=oss-me-east-1-internal.aliyuncs.com
-  [ "$(./include/check_port.py ${Host} 80)" == "False" ] && Host=`echo ${Host} | sed 's@-internal@@g'`
+  [ "${Location}" == '3' ] && Host=oss-cn-nanjing-internal.aliyuncs.com
+  [ "${Location}" == '4' ] && Host=oss-cn-fuzhou-internal.aliyuncs.com
+  [ "${Location}" == '5' ] && Host=oss-cn-qingdao-internal.aliyuncs.com
+  [ "${Location}" == '6' ] && Host=oss-cn-beijing-internal.aliyuncs.com
+  [ "${Location}" == '7' ] && Host=oss-cn-zhangjiakou-internal.aliyuncs.com
+  [ "${Location}" == '8' ] && Host=oss-cn-huhehaote-internal.aliyuncs.com
+  [ "${Location}" == '9' ] && Host=oss-cn-wulanchabu-internal.aliyuncs.com
+  [ "${Location}" == '10' ] && Host=oss-cn-shenzhen-internal.aliyuncs.com
+  [ "${Location}" == '11' ] && Host=oss-cn-heyuan-internal.aliyuncs.com
+  [ "${Location}" == '12' ] && Host=oss-cn-guangzhou-internal.aliyuncs.com
+  [ "${Location}" == '13' ] && Host=oss-cn-chengdu-internal.aliyuncs.com
+  [ "${Location}" == '14' ] && Host=oss-cn-hongkong-internal.aliyuncs.com
+  [ "${Location}" == '15' ] && Host=oss-us-west-1-internal.aliyuncs.com
+  [ "${Location}" == '16' ] && Host=oss-us-east-1-internal.aliyuncs.com
+  [ "${Location}" == '17' ] && Host=oss-ap-northeast-1-internal.aliyuncs.com
+  [ "${Location}" == '18' ] && Host=oss-ap-northeast-2-internal.aliyuncs.com
+  [ "${Location}" == '19' ] && Host=oss-ap-southeast-1-internal.aliyuncs.com
+  [ "${Location}" == '20' ] && Host=oss-ap-southeast-2-internal.aliyuncs.com
+  [ "${Location}" == '21' ] && Host=oss-ap-southeast-3-internal.aliyuncs.com
+  [ "${Location}" == '22' ] && Host=oss-ap-southeast-5-internal.aliyuncs.com
+  [ "${Location}" == '23' ] && Host=oss-ap-southeast-6-internal.aliyuncs.com
+  [ "${Location}" == '24' ] && Host=oss-ap-southeast-7-internal.aliyuncs.com
+  [ "${Location}" == '25' ] && Host=oss-ap-south-1-internal.aliyuncs.com
+  [ "${Location}" == '26' ] && Host=oss-eu-central-1-internal.aliyuncs.com
+  [ "${Location}" == '27' ] && Host=oss-eu-west-1-internal.aliyuncs.com
+  [ "${Location}" == '28' ] && Host=oss-me-east-1-internal.aliyuncs.com
+  [ "$(./include/ois.${ARCH} conn_port --host ${Host} --port 80)" == "false" ] && Host=`echo ${Host} | sed 's@-internal@@g'`
   [ -e "/root/.ossutilconfig" ] && rm -f /root/.ossutilconfig
   while :; do echo
     read -e -p "Please enter the aliyun oss Access Key ID: " KeyID
@@ -233,12 +248,12 @@ if [ -n "`echo ${desc_bk} | grep -w 3`" ]; then
     echo
     read -e -p "Please enter the aliyun oss Access Key Secret: " KeySecret
     [ -z "${KeySecret}" ] && continue
-    /usr/local/bin/ossutil ls -e ${Host} -i ${KeyID} -k ${KeySecret} > /dev/null 2>&1
+    ossutil ls -e ${Host} -i ${KeyID} -k ${KeySecret} > /dev/null 2>&1
     if [ $? -eq 0 ]; then
-      /usr/local/bin/ossutil config -e ${Host} -i ${KeyID} -k ${KeySecret} > /dev/null 2>&1
+      ossutil config -e ${Host} -i ${KeyID} -k ${KeySecret} > /dev/null 2>&1
       while :; do echo
         read -e -p "Please enter the aliyun oss bucket: " OSS_BUCKET
-        /usr/local/bin/ossutil mb oss://${OSS_BUCKET} > /dev/null 2>&1
+        ossutil mb oss://${OSS_BUCKET} > /dev/null 2>&1
         if [ $? -eq 0 ]; then
           echo "${CMSG}Bucket oss://${OSS_BUCKET}/ created${CEND}"
           sed -i "s@^oss_bucket=.*@oss_bucket=${OSS_BUCKET}@" ./options.conf
@@ -253,30 +268,34 @@ if [ -n "`echo ${desc_bk} | grep -w 3`" ]; then
 fi
 
 if [ -n "`echo ${desc_bk} | grep -w 4`" ]; then
-  Install_Python
-  [ ! -e "${python_install_dir}/bin/coscmd" ] && ${python_install_dir}/bin/pip install coscmd > /dev/null 2>&1
+  if [ ! -e "/usr/local/bin/coscli" ]; then
+    wget -qc https://cosbrowser.cloud.tencent.com/software/coscli/coscli-linux -O /usr/local/bin/coscli
+    chmod +x /usr/local/bin/coscli
+  fi
+
   while :; do echo
     echo 'Please select your backup qcloud datacenter:'
-    echo -e "\t ${CMSG} 1${CEND}. ap-beijing-1-北京一区(华北)  ${CMSG}2${CEND}. ap-beijing-北京"
-    echo -e "\t ${CMSG} 3${CEND}. ap-shanghai-上海(华东)       ${CMSG}4${CEND}. ap-guangzhou-广州(华南)"
-    echo -e "\t ${CMSG} 5${CEND}. ap-chengdu-成都(西南)        ${CMSG}6${CEND}. ap-chongqing-重庆"
+    echo -e "\t ${CMSG} 1${CEND}. ap-beijing-北京              ${CMSG}2${CEND}. ap-nanjing-南京"
+    echo -e "\t ${CMSG} 3${CEND}. ap-shanghai-上海             ${CMSG}4${CEND}. ap-guangzhou-广州"
+    echo -e "\t ${CMSG} 5${CEND}. ap-chengdu-成都              ${CMSG}6${CEND}. ap-chongqing-重庆"
     echo -e "\t ${CMSG} 7${CEND}. ap-shenzhen-fsi-深圳金融     ${CMSG}8${CEND}. ap-shanghai-fsi-上海金融"
     echo -e "\t ${CMSG} 9${CEND}. ap-beijing-fsi-北京金融     ${CMSG}10${CEND}. ap-hongkong-香港"
     echo -e "\t ${CMSG}11${CEND}. ap-singapore-新加坡         ${CMSG}12${CEND}. ap-mumbai-孟买"
-    echo -e "\t ${CMSG}13${CEND}. ap-seoul-首尔               ${CMSG}14${CEND}. ap-bangkok-曼谷"
-    echo -e "\t ${CMSG}15${CEND}. ap-tokyo-东京               ${CMSG}16${CEND}. na-siliconvalley-硅谷"
-    echo -e "\t ${CMSG}17${CEND}. na-ashburn-弗吉尼亚         ${CMSG}18${CEND}. na-toronto-多伦多"
-    echo -e "\t ${CMSG}19${CEND}. eu-frankfurt-法兰克福       ${CMSG}20${CEND}. eu-moscow-莫斯科"
+    echo -e "\t ${CMSG}13${CEND}. ap-jakarta-雅加达           ${CMSG}14${CEND}. ap-seoul-首尔"
+    echo -e "\t ${CMSG}15${CEND}. ap-bangkok-曼谷             ${CMSG}16${CEND}. ap-tokyo-东京"
+    echo -e "\t ${CMSG}17${CEND}. na-siliconvalley-硅谷       ${CMSG}18${CEND}. na-ashburn-弗吉尼亚"
+    echo -e "\t ${CMSG}19${CEND}. na-toronto-多伦多           ${CMSG}20${CEND}. sa-saopaulo-圣保罗"
+    echo -e "\t ${CMSG}21${CEND}. eu-frankfurt-法兰克福"
     read -e -p "Please input a number:(Default 1 press Enter) " Location
     Location=${Location:-1}
-    if [[ "${Location}" =~ ^[1-9]$|^1[0-9]$|^20$ ]]; then
+    if [[ "${Location}" =~ ^[1-9]$|^1[0-9]$|^2[0-1]$ ]]; then
       break
     else
-      echo "${CWARNING}input error! Please only input number 1~17${CEND}"
+      echo "${CWARNING}input error! Please only input number 1~21${CEND}"
     fi
   done
-  [ "${Location}" == '1' ] && REGION='ap-beijing-1'
-  [ "${Location}" == '2' ] && REGION='ap-beijing'
+  [ "${Location}" == '1' ] && REGION='ap-beijing'
+  [ "${Location}" == '2' ] && REGION='ap-nanjing'
   [ "${Location}" == '3' ] && REGION='ap-shanghai'
   [ "${Location}" == '4' ] && REGION='ap-guangzhou'
   [ "${Location}" == '5' ] && REGION='ap-chengdu'
@@ -287,18 +306,16 @@ if [ -n "`echo ${desc_bk} | grep -w 4`" ]; then
   [ "${Location}" == '10' ] && REGION='ap-hongkong'
   [ "${Location}" == '11' ] && REGION='ap-singapore'
   [ "${Location}" == '12' ] && REGION='ap-mumbai'
-  [ "${Location}" == '13' ] && REGION='ap-seoul'
-  [ "${Location}" == '14' ] && REGION='ap-bangkok'
-  [ "${Location}" == '15' ] && REGION='ap-tokyo'
-  [ "${Location}" == '16' ] && REGION='na-siliconvalley'
-  [ "${Location}" == '17' ] && REGION='na-ashburn'
-  [ "${Location}" == '18' ] && REGION='na-toronto'
-  [ "${Location}" == '19' ] && REGION='eu-frankfurt'
-  [ "${Location}" == '20' ] && REGION='eu-moscow'
+  [ "${Location}" == '13' ] && REGION='ap-jakarta'
+  [ "${Location}" == '14' ] && REGION='ap-seoul'
+  [ "${Location}" == '15' ] && REGION='ap-bangkok'
+  [ "${Location}" == '16' ] && REGION='ap-tokyo'
+  [ "${Location}" == '17' ] && REGION='na-siliconvalley'
+  [ "${Location}" == '18' ] && REGION='na-ashburn'
+  [ "${Location}" == '19' ] && REGION='na-toronto'
+  [ "${Location}" == '20' ] && REGION='sa-saopaulo'
+  [ "${Location}" == '21' ] && REGION='eu-frankfurt'
   while :; do echo
-    read -e -p "Please enter the Qcloud COS APPID: " APPID
-    [[ ! "${APPID}" =~ ^[0-9]+$ ]] && { echo "${CWARNING}input error, must be a number${CEND}"; continue; }
-    echo
     read -e -p "Please enter the Qcloud COS SECRET_ID: " SECRET_ID
     [ -z "${SECRET_ID}" ] && continue
     echo
@@ -306,27 +323,32 @@ if [ -n "`echo ${desc_bk} | grep -w 4`" ]; then
     [ -z "${SECRET_KEY}" ] && continue
     echo
     read -e -p "Please enter the Qcloud COS BUCKET: " COS_BUCKET
-    if [[ ${COS_BUCKET} =~ "-${APPID}"$ ]]; then
-      COS_BUCKET=${COS_BUCKET}
-    else
-      [ -z "${COS_BUCKET}" ] && continue
-      echo
-      COS_BUCKET=${COS_BUCKET}-${APPID}
-    fi
-    ${python_install_dir}/bin/coscmd config -u ${APPID} -a ${SECRET_ID} -s ${SECRET_KEY} -r ${REGION} -b ${COS_BUCKET} > /dev/null 2>&1
-    ${python_install_dir}/bin/coscmd list > /dev/null 2>&1
+    [ -z "${COS_BUCKET}" ] && continue
+    cat > ~/.cos.yaml << EOF
+cos:
+  base:
+    secretid: ${SECRET_ID}
+    secretkey: ${SECRET_KEY}
+    protocol: https
+  buckets:
+  - name: ${COS_BUCKET}
+    endpoint: cos.${REGION}.myqcloud.com
+EOF
+    coscli ls cos://${COS_BUCKET} > /dev/null 2>&1
     if [ $? -eq 0 ]; then
-      echo "${CMSG}APPID/SECRET_ID/SECRET_KEY/REGION/BUCKET OK${CEND}"
+      echo "${CMSG}SECRET_ID/SECRET_KEY/REGION/BUCKET OK${CEND}"
+      sed -i "s@^cos_bucket=.*@cos_bucket=${COS_BUCKET}@" ./options.conf
       echo
       break
     else
-      ${python_install_dir}/bin/coscmd -b ${COS_BUCKET} createbucket > /dev/null 2>&1
+      coscli mb cos://${COS_BUCKET} -e cos.${REGION}.myqcloud.com > /dev/null 2>&1
       if [ $? -eq 0 ]; then
         echo "${CMSG}Bucket ${COS_BUCKET} created${CEND}"
+        sed -i "s@^cos_bucket=.*@cos_bucket=${COS_BUCKET}@" ./options.conf
         echo
         break
       else
-        echo "${CWARNING}input error! APPID/SECRET_ID/SECRET_KEY/REGION/BUCKET invalid${CEND}"
+        echo "${CWARNING}input error! SECRET_ID/SECRET_KEY/REGION/BUCKET invalid${CEND}"
         continue
       fi
     fi
@@ -335,16 +357,16 @@ fi
 
 if [ -n "`echo ${desc_bk} | grep -w 5`" ]; then
   if [ ! -e "/usr/local/bin/upx" ]; then
-    if [ "${OS_BIT}" == '64' ]; then
-      wget -qc http://collection.b0.upaiyun.com/softwares/upx/upx_0.3.5_linux_x86_64.tar.gz -O /tmp/upx_0.3.5_linux_x86_64.tar.gz
-      tar xzf /tmp/upx_0.3.5_linux_x86_64.tar.gz -C /tmp/
-    elif [ "${OS_BIT}" == '32' ]; then
-      wget -qc http://collection.b0.upaiyun.com/softwares/upx/upx_0.3.5_linux_i386.tar.gz -O /tmp/upx_0.3.5_linux_i386.tar.gz 
-      tar xzf /tmp/upx_0.3.5_linux_i386.tar.gz -C /tmp/
+    if [ "${armplatform}" == 'y' ]; then
+      wget -qc http://collection.b0.upaiyun.com/softwares/upx/upx_0.4.3_linux_arm64.tar.gz -O /tmp/upx_0.4.3_linux_arm64.tar.gz
+      tar xzf /tmp/upx_0.4.3_linux_arm64.tar.gz -C /tmp/
+    else
+      wget -qc http://collection.b0.upaiyun.com/softwares/upx/upx_0.4.3_linux_x86_64.tar.gz -O /tmp/upx_0.4.3_linux_x86_64.tar.gz
+      tar xzf /tmp/upx_0.4.3_linux_x86_64.tar.gz -C /tmp/
     fi
     /bin/mv /tmp/upx /usr/local/bin/upx
     chmod +x /usr/local/bin/upx
-    rm -f /tmp/upx_* /tmp/LICENSE /tmp/README.md
+    rm -f /tmp/{upx_*,LICENSE,README.md}
   fi
   while :; do echo
     read -e -p "Please enter the upyun ServiceName: " ServiceName
@@ -356,7 +378,7 @@ if [ -n "`echo ${desc_bk} | grep -w 5`" ]; then
     read -e -p "Please enter the upyun Password: " Password
     [ -z "${Password}" ] && continue
     echo
-    /usr/local/bin/upx login ${ServiceName} ${Operator} ${Password} > /dev/null 2>&1
+    upx login ${ServiceName} ${Operator} ${Password} > /dev/null 2>&1
     if [ $? = 0 ]; then
       echo "${CMSG}ServiceName/Operator/Password OK${CEND}"
       echo
@@ -368,21 +390,13 @@ if [ -n "`echo ${desc_bk} | grep -w 5`" ]; then
 fi
 
 if [ -n "`echo ${desc_bk} | grep -w 6`" ]; then
-  if [ ! -e "/usr/local/bin/qrsctl" ]; then
-    if [ "${OS_BIT}" == '64' ]; then
-      wget -qc http://devtools.qiniu.com/linux/amd64/qrsctl -O /usr/local/bin/qrsctl
-    elif [ "${OS_BIT}" == '32' ]; then
-      wget -qc http://devtools.qiniu.com/linux/386/qrsctl -O /usr/local/bin/qrsctl
-    fi
-    chmod +x /usr/local/bin/qrsctl
-  fi
   if [ ! -e "/usr/local/bin/qshell" ]; then
-    if [ "${OS_BIT}" == '64' ]; then
-      wget -qc https://devtools.qiniu.com/qshell-v2.5.0-linux-amd64.tar.gz -O /tmp/qshell-v2.5.0-linux-amd64.tar.gz
-      tar xzf /tmp/qshell-v2.5.0-linux-amd64.tar.gz -C /usr/local/bin/
-    elif [ "${OS_BIT}" == '32' ]; then
-      wget -qc https://devtools.qiniu.com/qshell-v2.5.0-linux-386.tar.gz -O /tmp/qshell-v2.5.0-linux-386.tar.gz 
-      tar xzf /tmp/qshell-v2.5.0-linux-386.tar.gz -C /usr/local/bin/
+    if [ "${armplatform}" == 'y' ]; then
+      wget -qc https://devtools.qiniu.com/qshell-v2.12.0-linux-arm64.tar.gz -O /tmp/qshell-v2.12.0-linux-arm64.tar.gz
+      tar xzf /tmp/qshell-v2.12.0-linux-arm64.tar.gz -C /usr/local/bin/
+    else
+      wget -qc https://devtools.qiniu.com/qshell-v2.12.0-linux-amd64.tar.gz -O /tmp/qshell-v2.12.0-linux-amd64.tar.gz
+      tar xzf /tmp/qshell-v2.12.0-linux-amd64.tar.gz -C /usr/local/bin/
     fi
     chmod +x /usr/local/bin/qshell
     rm -f /tmp/qshell*
@@ -391,13 +405,13 @@ if [ -n "`echo ${desc_bk} | grep -w 6`" ]; then
     echo 'Please select your backup qiniu datacenter:'
     echo -e "\t ${CMSG} 1${CEND}. 华东            ${CMSG}2${CEND}. 华北"
     echo -e "\t ${CMSG} 3${CEND}. 华南            ${CMSG}4${CEND}. 北美"
-    echo -e "\t ${CMSG} 5${CEND}. 东南亚"
+    echo -e "\t ${CMSG} 5${CEND}. 东南亚          ${CMSG}6${CEND}. 华东-浙江2"
     read -e -p "Please input a number:(Default 1 press Enter) " Location
     Location=${Location:-1}
-    if [[ "${Location}" =~ ^[1-5]$ ]]; then
+    if [[ "${Location}" =~ ^[1-6]$ ]]; then
       break
     else
-      echo "${CWARNING}input error! Please only input number 1~5${CEND}"
+      echo "${CWARNING}input error! Please only input number 1~6${CEND}"
     fi
   done
   [ "${Location}" == '1' ] && zone='z0'
@@ -405,6 +419,7 @@ if [ -n "`echo ${desc_bk} | grep -w 6`" ]; then
   [ "${Location}" == '3' ] && zone='z2'
   [ "${Location}" == '4' ] && zone='na0'
   [ "${Location}" == '5' ] && zone='as0'
+  [ "${Location}" == '6' ] && zone='cn-east-2'
   while :; do echo
     read -e -p "Please enter the qiniu AccessKey: " AccessKey
     [ -z "${AccessKey}" ] && continue
@@ -415,91 +430,104 @@ if [ -n "`echo ${desc_bk} | grep -w 6`" ]; then
     read -e -p "Please enter the qiniu bucket: " QINIU_BUCKET
     [ -z "${QINIU_BUCKET}" ] && continue
     echo
-    /usr/local/bin/qshell account ${AccessKey} ${SecretKey} backup
-    /usr/local/bin/qrsctl login ${AccessKey} ${SecretKey}
-    if /usr/local/bin/qrsctl bucketinfo ${QINIU_BUCKET} > /dev/null 2>&1; then
+    qshell account ${AccessKey} ${SecretKey} backup
+    if qshell buckets | grep -w ${QINIU_BUCKET} > /dev/null 2>&1; then
       sed -i "s@^qiniu_bucket=.*@qiniu_bucket=${QINIU_BUCKET}@" ./options.conf
-      echo "${CMSG}AccessKey/SecretKey OK${CEND}"
-      echo
-      break
-    elif /usr/local/bin/qrsctl mkbucket ${QINIU_BUCKET} ${zone} > /dev/null 2>&1; then
-      /usr/local/bin/qrsctl private ${QINIU_BUCKET} 1
-      echo "${CMSG}Bucket ${QINIU_BUCKET} created${CEND}"
-      sed -i "s@^qiniu_bucket=.*@qiniu_bucket=${QINIU_BUCKET}@" ./options.conf
-      echo "${CMSG}AccessKey/SecretKey OK${CEND}"
+      echo "${CMSG}AccessKey/SecretKey/Bucket OK${CEND}"
       echo
       break
     else
-      echo "${CWARNING}input error! AccessKey/SecretKey invalid${CEND}"
+      echo "${CWARNING}input error! AccessKey/SecretKey/Bucket invalid${CEND}"
     fi
   done
 fi
 
 if [ -n "`echo ${desc_bk} | grep -w 7`" ]; then
-  Install_Python
-  [ ! -e "${python_install_dir}/bin/s3cmd" ] && ${python_install_dir}/bin/pip install s3cmd > /dev/null 2>&1
+  if [ ! -e "/usr/local/bin/aws" ] && [ ! -e "/usr/bin/aws" ]; then
+    wget -qc https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -O /tmp/awscliv2.zip
+    unzip /tmp/awscliv2.zip -d /tmp/
+    /tmp/aws/install
+    rm -rf /tmp/{awscliv2.zip,aws}
+  fi
   while :; do echo
     echo 'Please select your backup amazon datacenter:'
     echo -e "\t ${CMSG} 1${CEND}. us-east-2                    ${CMSG} 2${CEND}. us-east-1"
     echo -e "\t ${CMSG} 3${CEND}. us-west-1                    ${CMSG} 4${CEND}. us-west-2"
-    echo -e "\t ${CMSG} 5${CEND}. ap-south-1                   ${CMSG} 6${CEND}. ap-northeast-3"
-    echo -e "\t ${CMSG} 7${CEND}. ap-northeast-2               ${CMSG} 8${CEND}. ap-southeast-1"
-    echo -e "\t ${CMSG} 9${CEND}. ap-southeast-2               ${CMSG}10${CEND}. ap-northeast-1"
-    echo -e "\t ${CMSG}11${CEND}. ca-central-1                 ${CMSG}12${CEND}. cn-north-1"
-    echo -e "\t ${CMSG}13${CEND}. cn-northwest-1               ${CMSG}14${CEND}. eu-central-1"
-    echo -e "\t ${CMSG}15${CEND}. eu-west-1                    ${CMSG}16${CEND}. eu-west-2"
-    echo -e "\t ${CMSG}17${CEND}. eu-west-3                    ${CMSG}18${CEND}. eu-north-1"
-    echo -e "\t ${CMSG}19${CEND}. sa-east-1                    ${CMSG}20${CEND}. us-gov-east-1"
-    echo -e "\t ${CMSG}21${CEND}. us-gov-west-1"
+    echo -e "\t ${CMSG} 5${CEND}. af-south-1                   ${CMSG} 6${CEND}. ap-east-1"
+    echo -e "\t ${CMSG} 7${CEND}. ap-south-2                   ${CMSG} 8${CEND}. ap-southeast-3"
+    echo -e "\t ${CMSG} 9${CEND}. ap-southeast-4               ${CMSG}10${CEND}. ap-south-1"
+    echo -e "\t ${CMSG}11${CEND}. ap-northeast-3               ${CMSG}12${CEND}. ap-northeast-2"
+    echo -e "\t ${CMSG}13${CEND}. ap-southeast-1               ${CMSG}14${CEND}. ap-southeast-2"
+    echo -e "\t ${CMSG}15${CEND}. ap-northeast-1               ${CMSG}16${CEND}. ca-central-1"
+    echo -e "\t ${CMSG}17${CEND}. eu-central-1                 ${CMSG}18${CEND}. eu-west-1"
+    echo -e "\t ${CMSG}19${CEND}. eu-west-2                    ${CMSG}20${CEND}. eu-south-1"
+    echo -e "\t ${CMSG}21${CEND}. eu-west-3                    ${CMSG}22${CEND}. eu-south-2"
+    echo -e "\t ${CMSG}23${CEND}. eu-north-1                   ${CMSG}24${CEND}. eu-central-2"
+    echo -e "\t ${CMSG}25${CEND}. me-south-1                   ${CMSG}26${CEND}. me-central-1"
+    echo -e "\t ${CMSG}27${CEND}. sa-east-1                    ${CMSG}28${CEND}. us-gov-east-1"
+    echo -e "\t ${CMSG}29${CEND}. us-gov-west-1                ${CMSG}30${CEND}. cn-north-1"
+    echo -e "\t ${CMSG}31${CEND}. cn-northwest-1"
     read -e -p "Please input a number:(Default 1 press Enter) " Location
     Location=${Location:-1}
-    if [[ "${Location}" =~ ^[1-9]$|^1[0-9]$|^2[0-1]$ ]]; then
+    if [[ "${Location}" =~ ^[1-9]$|^[1-2][0-9]$|^3[0-1]$ ]]; then
       break
     else
-      echo "${CWARNING}input error! Please only input number 1~21${CEND}"
+      echo "${CWARNING}input error! Please only input number 1~31${CEND}"
     fi
   done
   [ "${Location}" == '1' ] && REGION='us-east-2'
   [ "${Location}" == '2' ] && REGION='us-east-1'
   [ "${Location}" == '3' ] && REGION='us-west-1'
   [ "${Location}" == '4' ] && REGION='us-west-2'
-  [ "${Location}" == '5' ] && REGION='ap-south-1'
-  [ "${Location}" == '6' ] && REGION='ap-northeast-3'
-  [ "${Location}" == '7' ] && REGION='ap-northeast-2'
-  [ "${Location}" == '8' ] && REGION='ap-southeast-1'
-  [ "${Location}" == '9' ] && REGION='ap-southeast-2'
-  [ "${Location}" == '10' ] && REGION='ap-northeast-1'
-  [ "${Location}" == '11' ] && REGION='ca-central-1'
-  [ "${Location}" == '12' ] && REGION='cn-north-1'
-  [ "${Location}" == '13' ] && REGION='cn-northwest-1'
-  [ "${Location}" == '14' ] && REGION='eu-central-1'
-  [ "${Location}" == '15' ] && REGION='eu-west-1'
-  [ "${Location}" == '16' ] && REGION='eu-west-2'
-  [ "${Location}" == '17' ] && REGION='eu-west-3'
-  [ "${Location}" == '18' ] && REGION='eu-north-1'
-  [ "${Location}" == '19' ] && REGION='sa-east-1'
-  [ "${Location}" == '20' ] && REGION='us-gov-east-1'
-  [ "${Location}" == '21' ] && REGION='us-gov-west-1'
+  [ "${Location}" == '5' ] && REGION='af-south-1'
+  [ "${Location}" == '6' ] && REGION='ap-east-1'
+  [ "${Location}" == '7' ] && REGION='ap-south-2'
+  [ "${Location}" == '8' ] && REGION='ap-southeast-3'
+  [ "${Location}" == '9' ] && REGION='ap-southeast-4'
+  [ "${Location}" == '10' ] && REGION='ap-south-1'
+  [ "${Location}" == '11' ] && REGION='ap-northeast-3'
+  [ "${Location}" == '12' ] && REGION='ap-northeast-2'
+  [ "${Location}" == '13' ] && REGION='ap-southeast-1'
+  [ "${Location}" == '14' ] && REGION='ap-southeast-2'
+  [ "${Location}" == '15' ] && REGION='ap-northeast-1'
+  [ "${Location}" == '16' ] && REGION='ca-central-1'
+  [ "${Location}" == '17' ] && REGION='eu-central-1'
+  [ "${Location}" == '18' ] && REGION='eu-west-1'
+  [ "${Location}" == '19' ] && REGION='eu-west-2'
+  [ "${Location}" == '20' ] && REGION='eu-south-1'
+  [ "${Location}" == '21' ] && REGION='eu-west-3'
+  [ "${Location}" == '22' ] && REGION='eu-south-2'
+  [ "${Location}" == '23' ] && REGION='eu-north-1'
+  [ "${Location}" == '24' ] && REGION='eu-central-2'
+  [ "${Location}" == '25' ] && REGION='me-south-1'
+  [ "${Location}" == '26' ] && REGION='me-central-1'
+  [ "${Location}" == '27' ] && REGION='sa-east-1'
+  [ "${Location}" == '28' ] && REGION='us-gov-east-1'
+  [ "${Location}" == '29' ] && REGION='us-gov-west-1'
+  [ "${Location}" == '30' ] && REGION='cn-north-1'
+  [ "${Location}" == '31' ] && REGION='cn-northwest-1'
   while :; do echo
     read -e -p "Please enter the AWS Access Key: " ACCESS_KEY
     [ -z "${ACCESS_KEY}" ] && continue
     echo
     read -e -p "Please enter the AWS Access Key: " SECRET_KEY
     [ -z "${SECRET_KEY}" ] && continue
-    ${python_install_dir}/bin/s3cmd --access_key=${ACCESS_KEY} --secret_key=${SECRET_KEY} --region=${REGION} la > /dev/null 2>&1
+    aws configure set aws_access_key_id ${ACCESS_KEY}
+    aws configure set aws_secret_access_key ${SECRET_KEY}
+    aws configure set region ${REGION}
+    aws sts get-caller-identity > /dev/null 2>&1
     if [ $? -eq 0 ]; then
-      ${python_install_dir}/bin/s3cmd --configure --access_key=${ACCESS_KEY} --secret_key=${SECRET_KEY} --region=${REGION} --dump-config > ~/.s3cfg
       echo "${CMSG}ACCESS_KEY/SECRET_KEY OK${CEND}"
       while :; do echo
         read -e -p "Please enter the Amazon S3 bucket: " S3_BUCKET
         [ -z "${S3_BUCKET}" ] && continue
-        ${python_install_dir}/bin/s3cmd ls s3://${S3_BUCKET} > /dev/null 2>&1
+        aws s3 ls s3://${S3_BUCKET} > /dev/null 2>&1
         if [ $? -eq 0 ]; then
           echo "${CMSG}Bucket s3://${S3_BUCKET}/ existed${CEND}"
           sed -i "s@^s3_bucket=.*@s3_bucket=${S3_BUCKET}@" ./options.conf
           break
         else
-          ${python_install_dir}/bin/s3cmd mb s3://${S3_BUCKET} > /dev/null 2>&1
+          aws s3 mb s3://${S3_BUCKET} > /dev/null 2>&1
           if [ $? -eq 0 ]; then
             echo "${CMSG}Bucket s3://${S3_BUCKET}/ created${CEND}"
             sed -i "s@^s3_bucket=.*@s3_bucket=${S3_BUCKET}@" ./options.conf
@@ -520,8 +548,10 @@ fi
 
 if [ -n "`echo ${desc_bk} | grep -w 8`" ]; then
   if [ ! -e "/usr/local/bin/dbxcli" ]; then
-    if [ "${OS_BIT}" == '64' ]; then
-      wget -qc http://mirrors.linuxeye.com/oneinstack/src/dbxcli-linux-amd64 -O /usr/local/bin/dbxcli
+    if [ "${armplatform}" == 'y' ]; then
+      wget -qc ${mirror_link}/oneinstack/src/dbxcli-linux-arm -O /usr/local/bin/dbxcli
+    else
+      wget -qc ${mirror_link}/oneinstack/src/dbxcli-linux-amd64 -O /usr/local/bin/dbxcli
     fi
     chmod +x /usr/local/bin/dbxcli
   fi

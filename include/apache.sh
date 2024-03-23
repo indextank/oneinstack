@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -54,8 +54,7 @@ Install_Apache() {
   fi
 
   pushd httpd-${apache_ver} > /dev/null
-  [ ! -d "${apache_install_dir}" ] && mkdir -p ${apache_install_dir}
-  LDFLAGS=-ldl ./configure --prefix=${apache_install_dir} --enable-mpms-shared=all --with-pcre --with-apr=${apr_install_dir} --with-apr-util=${apr_install_dir} --enable-headers --enable-mime-magic --enable-deflate --enable-proxy --enable-so --enable-dav --enable-rewrite --enable-remoteip --enable-expires --enable-static-support --enable-suexec --enable-mods-shared=most --enable-nonportable-atomics=yes --enable-ssl --with-ssl=${openssl_install_dir} --enable-http2 --with-nghttp2=/usr/local
+  LDFLAGS=-ldl ./configure --prefix=${apache_install_dir} --enable-mpms-shared=all --with-pcre --with-apr=${apr_install_dir} --with-apr-util=${apr_install_dir} --enable-headers --enable-mime-magic --enable-deflate --enable-proxy --enable-so --enable-dav --enable-rewrite --enable-remoteip --enable-expires --enable-static-support --enable-suexec --enable-mods-shared=most --enable-nonportable-atomics=yes --enable-ssl --with-ssl --enable-http2 --with-nghttp2=/usr/local
   make -j ${THREAD} && make install
   popd > /dev/null
   unset LDFLAGS
@@ -64,26 +63,17 @@ Install_Apache() {
     rm -rf httpd-${apache_ver} pcre-${pcre_ver}
   else
     rm -rf ${apache_install_dir}
-    echo "${CFAILURE}Apache install failed, Please contact the author! ${CEND}" && lsb_release -a
-    kill -9 $$
+    echo "${CFAILURE}Apache install failed, Please contact the author! ${CEND}" && grep -Ew 'NAME|ID|ID_LIKE|VERSION_ID|PRETTY_NAME' /etc/os-release
+    kill -9 $$; exit 1;
   fi
 
   [ -z "`grep ^'export PATH=' /etc/profile`" ] && echo "export PATH=${apache_install_dir}/bin:\$PATH" >> /etc/profile
   [ -n "`grep ^'export PATH=' /etc/profile`" -a -z "`grep ${apache_install_dir} /etc/profile`" ] && sed -i "s@^export PATH=\(.*\)@export PATH=${apache_install_dir}/bin:\1@" /etc/profile
   . /etc/profile
 
-  if [ -e /bin/systemctl ]; then
-    /bin/cp ../init.d/httpd.service /lib/systemd/system/
-    sed -i "s@/usr/local/apache@${apache_install_dir}@g" /lib/systemd/system/httpd.service
-    systemctl enable httpd
-  else
-    /bin/cp ${apache_install_dir}/bin/apachectl /etc/init.d/httpd
-    sed -i '2a # chkconfig: - 85 15' /etc/init.d/httpd
-    sed -i '3a # description: Apache is a World Wide Web server. It is used to serve' /etc/init.d/httpd
-    chmod +x /etc/init.d/httpd
-    [ "${PM}" == 'yum' ] && { chkconfig --add httpd; chkconfig httpd on; }
-    [ "${PM}" == 'apt-get' ] && update-rc.d httpd defaults
-  fi
+  /bin/cp ../init.d/httpd.service /lib/systemd/system/
+  sed -i "s@/usr/local/apache@${apache_install_dir}@g" /lib/systemd/system/httpd.service
+  systemctl enable httpd
 
   sed -i "s@^User daemon@User ${run_user}@" ${apache_install_dir}/conf/httpd.conf
   sed -i "s@^Group daemon@Group ${run_group}@" ${apache_install_dir}/conf/httpd.conf
@@ -194,6 +184,7 @@ EOF
     sed -i "s@LogFormat \"%h %l@LogFormat \"%h %a %l@g" ${apache_install_dir}/conf/httpd.conf
   fi
   ldconfig
-  service httpd start
+  [ "${with_old_openssl_flag}" == 'y' ] && sed -i "s@^export LD_LIBRARY_PATH.*@export LD_LIBRARY_PATH=${openssl_install_dir}/lib:\$LD_LIBRARY_PATH@" ${apache_install_dir}/bin/envvars
+  systemctl start httpd
   popd > /dev/null
 }

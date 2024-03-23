@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -15,7 +15,7 @@ Install_ionCube() {
     PHP_main_ver=${PHP_detail_ver%.*}
     phpExtensionDir=`${php_install_dir}/bin/php-config --extension-dir`
     [ ! -d "${phpExtensionDir}" ] && mkdir -p ${phpExtensionDir}
-    [ -e "ioncube_loaders_lin_${SYS_BIT_d}.tar.gz" ] && tar xzf ioncube_loaders_lin_${SYS_BIT_d}.tar.gz
+    [ -e "ioncube_loaders_lin_${SYS_ARCH_i}.tar.gz" ] && tar xzf ioncube_loaders_lin_${SYS_ARCH_i}.tar.gz
     if [ -z "`echo ${phpExtensionDir} | grep 'non-zts'`" ]; then
       /bin/mv ioncube/ioncube_loader_lin_${PHP_main_ver}_ts.so ${phpExtensionDir}
       zend_extension="${phpExtensionDir}/ioncube_loader_lin_${PHP_main_ver}_ts.so"

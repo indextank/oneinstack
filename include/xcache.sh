@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -67,7 +67,7 @@ EOF
         echo "${CSUCCESS}PHP xcache module installed successfully! ${CEND}"
         rm -rf xcache-${xcache_ver}
       else
-        echo "${CFAILURE}PHP xcache module install failed, Please contact the author! ${CEND}" && lsb_release -a
+        echo "${CFAILURE}PHP xcache module install failed, Please contact the author! ${CEND}" && grep -Ew 'NAME|ID|ID_LIKE|VERSION_ID|PRETTY_NAME' /etc/os-release
       fi
     else
       echo; echo "${CWARNING}Your php ${PHP_detail_ver} does not support XCache! ${CEND}";

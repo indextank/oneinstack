@@ -2,30 +2,30 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
 #       https://github.com/oneinstack/oneinstack
 
-Install_MariaDB103() {
+Install_MariaDB1011() {
   pushd ${oneinstack_dir}/src > /dev/null
   id -u mysql >/dev/null 2>&1
   [ $? -ne 0 ] && useradd -M -s /sbin/nologin mysql
 
   [ ! -d "${mariadb_install_dir}" ] && mkdir -p ${mariadb_install_dir}
-  mkdir -p ${mariadb_data_dir};chown mysql.mysql -R ${mariadb_data_dir}
+  mkdir -p ${mariadb_data_dir};chown mysql:mysql -R ${mariadb_data_dir}
 
   if [ "${dbinstallmethod}" == "1" ]; then
-    tar zxf mariadb-${mariadb103_ver}-linux-${SYS_BIT_b}.tar.gz
-    mv mariadb-${mariadb103_ver}-linux-${SYS_BIT_b}/* ${mariadb_install_dir}
+    tar zxf mariadb-${mariadb1011_ver}-linux-systemd-x86_64.tar.gz
+    mv mariadb-${mariadb1011_ver}-linux-systemd-x86_64/* ${mariadb_install_dir}
     sed -i 's@executing mysqld_safe@executing mysqld_safe\nexport LD_PRELOAD=/usr/local/lib/libjemalloc.so@' ${mariadb_install_dir}/bin/mysqld_safe
     sed -i "s@/usr/local/mysql@${mariadb_install_dir}@g" ${mariadb_install_dir}/bin/mysqld_safe
   elif [ "${dbinstallmethod}" == "2" ]; then
     boostVersion2=$(echo ${boost_oldver} | awk -F. '{print $1"_"$2"_"$3}')
     tar xzf boost_${boostVersion2}.tar.gz
-    tar xzf mariadb-${mariadb103_ver}.tar.gz
-    pushd mariadb-${mariadb103_ver}
+    tar xzf mariadb-${mariadb1011_ver}.tar.gz
+    pushd mariadb-${mariadb1011_ver}
     cmake . -DCMAKE_INSTALL_PREFIX=${mariadb_install_dir} \
     -DMYSQL_DATADIR=${mariadb_data_dir} \
     -DDOWNLOAD_BOOST=1 \
@@ -52,14 +52,14 @@ Install_MariaDB103() {
     sed -i "s+^dbrootpwd.*+dbrootpwd='${dbrootpwd}'+" ../options.conf
     echo "${CSUCCESS}MariaDB installed successfully! ${CEND}"
     if [ "${dbinstallmethod}" == "1" ]; then
-      rm -rf mariadb-${mariadb103_ver}-linux-${SYS_BIT_b}
+      rm -rf mariadb-${mariadb1011_ver}-linux-systemd-x86_64
     elif [ "${dbinstallmethod}" == "2" ]; then
-      rm -rf mariadb-${mariadb103_ver} boost_${boostVersion2}
+      rm -rf mariadb-${mariadb1011_ver} boost_${boostVersion2}
     fi
   else
     rm -rf ${mariadb_install_dir}
-    echo "${CFAILURE}MariaDB install failed, Please contact the author! ${CEND}" && lsb_release -a
-    kill -9 $$
+    echo "${CFAILURE}MariaDB install failed, Please contact the author! ${CEND}" && grep -Ew 'NAME|ID|ID_LIKE|VERSION_ID|PRETTY_NAME' /etc/os-release
+    kill -9 $$; exit 1;
   fi
 
   /bin/cp ${mariadb_install_dir}/support-files/mysql.server /etc/init.d/mysqld
@@ -75,6 +75,7 @@ Install_MariaDB103() {
 [client]
 port = 3306
 socket = /tmp/mysql.sock
+default-character-set = utf8mb4
 
 [mysqld]
 port = 3306
@@ -138,19 +139,16 @@ innodb_open_files = 500
 innodb_buffer_pool_size = 64M
 innodb_write_io_threads = 4
 innodb_read_io_threads = 4
-innodb_thread_concurrency = 0
 innodb_purge_threads = 1
 innodb_flush_log_at_trx_commit = 2
 innodb_log_buffer_size = 2M
 innodb_log_file_size = 32M
-innodb_log_files_in_group = 3
 innodb_max_dirty_pages_pct = 90
 innodb_lock_wait_timeout = 120
 
 bulk_insert_buffer_size = 8M
 myisam_sort_buffer_size = 8M
 myisam_max_sort_file_size = 10G
-myisam_repair_threads = 1
 
 interactive_timeout = 28800
 wait_timeout = 28800
@@ -196,7 +194,7 @@ EOF
   ${mariadb_install_dir}/scripts/mysql_install_db --user=mysql --basedir=${mariadb_install_dir} --datadir=${mariadb_data_dir}
 
   [ "${Wsl}" == true ] && chmod 600 /etc/my.cnf
-  chown mysql.mysql -R ${mariadb_data_dir}
+  chown mysql:mysql -R ${mariadb_data_dir}
   [ -d "/etc/mysql" ] && /bin/mv /etc/mysql{,_bk}
   service mysqld start
   [ -z "$(grep ^'export PATH=' /etc/profile)" ] && echo "export PATH=${mariadb_install_dir}/bin:\$PATH" >> /etc/profile
@@ -205,7 +203,7 @@ EOF
 
   ${mariadb_install_dir}/bin/mysql -e "grant all privileges on *.* to root@'127.0.0.1' identified by \"${dbrootpwd}\" with grant option;"
   ${mariadb_install_dir}/bin/mysql -e "grant all privileges on *.* to root@'localhost' identified by \"${dbrootpwd}\" with grant option;"
-  ${mariadb_install_dir}/bin/mysql -uroot -p${dbrootpwd} -e "delete from mysql.user where Password='' where User not like 'mariadb.%';"
+  ${mariadb_install_dir}/bin/mysql -uroot -p${dbrootpwd} -e "delete from mysql.user where Password='' and User not like 'mariadb.%';"
   ${mariadb_install_dir}/bin/mysql -uroot -p${dbrootpwd} -e "delete from mysql.db where User='';"
   ${mariadb_install_dir}/bin/mysql -uroot -p${dbrootpwd} -e "delete from mysql.proxies_priv where Host!='localhost';"
   ${mariadb_install_dir}/bin/mysql -uroot -p${dbrootpwd} -e "drop database test;"

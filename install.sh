@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -12,7 +12,7 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 clear
 printf "
 #######################################################################
-#       OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+      #
+#       OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+      #
 #       For more information please visit https://oneinstack.com      #
 #######################################################################
 "
@@ -36,8 +36,8 @@ xcachepwd=`< /dev/urandom tr -dc A-Za-z0-9 | head -c8`
 dbinstallmethod=1
 
 version() {
-  echo "version: 2.4"
-  echo "updated date: 2021-05-18"
+  echo "version: 2.6"
+  echo "updated date: 2023-02-04"
 }
 
 Show_Help() {
@@ -45,20 +45,20 @@ Show_Help() {
   echo "Usage: $0  command ...[parameters]....
   --help, -h                  Show this help message, More: https://oneinstack.com/auto
   --version, -v               Show version info
-  --nginx_option [1-3]        Install Nginx server version
+  --nginx_option [1-4]        Install Nginx server version
   --apache                    Install Apache
   --apache_mode_option [1-2]  Apache2.4 mode, 1(default): php-fpm, 2: mod_php
   --apache_mpm_option [1-3]   Apache2.4 MPM, 1(default): event, 2: prefork, 3: worker
-  --php_option [1-10]         Install PHP version
-  --mphp_ver [53~80]          Install another PHP version (PATH: ${php_install_dir}\${mphp_ver})
+  --php_option [1-13]         Install PHP version
+  --mphp_ver [53~83]          Install another PHP version (PATH: ${php_install_dir}\${mphp_ver})
   --mphp_addons               Only install another PHP addons
   --phpcache_option [1-4]     Install PHP opcode cache, default: 1 opcache
   --php_extensions [ext name] Install PHP extensions, include zendguardloader,ioncube,
                               sourceguardian,imagick,gmagick,fileinfo,imap,ldap,calendar,phalcon,
                               yaf,yar,redis,memcached,memcache,mongodb,swoole,xdebug
-  --node                      Install Nodejs
+  --nodejs                    Install Nodejs
   --tomcat_option [1-4]       Install Tomcat version
-  --jdk_option [1-4]          Install JDK version
+  --jdk_option [1-3]          Install JDK version
   --db_option [1-14]          Install DB version
   --dbinstallmethod [1-2]     DB install method, default: 1 binary install
   --dbrootpwd [password]      DB super password
@@ -66,151 +66,275 @@ Show_Help() {
   --redis                     Install Redis
   --memcached                 Install Memcached
   --phpmyadmin                Install phpMyAdmin
-  --python                    Install Python (PATH: ${python_install_dir})
   --ssh_port [No.]            SSH port
-  --iptables                  Enable iptables
+  --firewall                  Enable firewall
+  --md5sum                    Check md5sum
   --reboot                    Restart the server after installation
   "
 }
 ARG_NUM=$#
-TEMP=`getopt -o hvV --long help,version,nginx_option:,apache,apache_mode_option:,apache_mpm_option:,php_option:,mphp_ver:,mphp_addons,phpcache_option:,php_extensions:,node,tomcat_option:,jdk_option:,db_option:,dbrootpwd:,dbinstallmethod:,pureftpd,redis,memcached,phpmyadmin,python,ssh_port:,iptables,reboot -- "$@" 2>/dev/null`
+TEMP=`getopt -o hvV --long help,version,nginx_option:,apache,apache_mode_option:,apache_mpm_option:,php_option:,mphp_ver:,mphp_addons,phpcache_option:,php_extensions:,nodejs,tomcat_option:,jdk_option:,db_option:,dbrootpwd:,dbinstallmethod:,pureftpd,redis,memcached,phpmyadmin,ssh_port:,firewall,md5sum,reboot -- "$@" 2>/dev/null`
 [ $? != 0 ] && echo "${CWARNING}ERROR: unknown argument! ${CEND}" && Show_Help && exit 1
 eval set -- "${TEMP}"
 while :; do
   [ -z "$1" ] && break;
   case "$1" in
-    -h|--help)
-      Show_Help; exit 0
-      ;;
-    -v|-V|--version)
-      version; exit 0
-      ;;
-    --nginx_option)
-      nginx_option=$2; shift 2
-      [[ ! ${nginx_option} =~ ^[1-3]$ ]] && { echo "${CWARNING}nginx_option input error! Please only input number 1~3${CEND}"; exit 1; }
-      [ -e "${nginx_install_dir}/sbin/nginx" ] && { echo "${CWARNING}Nginx already installed! ${CEND}"; unset nginx_option; }
-      [ -e "${tengine_install_dir}/sbin/nginx" ] && { echo "${CWARNING}Tengine already installed! ${CEND}"; unset nginx_option; }
-      [ -e "${openresty_install_dir}/nginx/sbin/nginx" ] && { echo "${CWARNING}OpenResty already installed! ${CEND}"; unset nginx_option; }
-      ;;
-    --apache)
-      apache_flag=y; shift 1
-      [ -e "${apache_install_dir}/bin/httpd" ] && { echo "${CWARNING}Aapche already installed! ${CEND}"; unset apache_flag; }
-      ;;
-    --apache_mode_option)
-      apache_mode_option=$2; shift 2
-      [[ ! ${apache_mode_option} =~ ^[1-2]$ ]] && { echo "${CWARNING}apache_mode_option input error! Please only input number 1~2${CEND}"; exit 1; }
-      ;;
-    --apache_mpm_option)
-      apache_mpm_option=$2; shift 2
-      [[ ! ${apache_mpm_option} =~ ^[1-3]$ ]] && { echo "${CWARNING}apache_mpm_option input error! Please only input number 1~3${CEND}"; exit 1; }
-      ;;
-    --php_option)
-      php_option=$2; shift 2
-      [[ ! ${php_option} =~ ^[1-9]$|^10$ ]] && { echo "${CWARNING}php_option input error! Please only input number 1~10${CEND}"; exit 1; }
-      [ -e "${php_install_dir}/bin/phpize" ] && { echo "${CWARNING}PHP already installed! ${CEND}"; unset php_option; }
-      ;;
-    --mphp_ver)
-      mphp_ver=$2; mphp_flag=y; shift 2
-      [[ ! "${mphp_ver}" =~ ^5[3-6]$|^7[0-4]$|^80$ ]] && { echo "${CWARNING}mphp_ver input error! Please only input number 53~80${CEND}"; exit 1; }
-      ;;
-    --mphp_addons)
-      mphp_addons_flag=y; shift 1
-      ;;
-    --phpcache_option)
-      phpcache_option=$2; shift 2
-      ;;
-    --php_extensions)
-      php_extensions=$2; shift 2
-      [ -n "`echo ${php_extensions} | grep -w zendguardloader`" ] && pecl_zendguardloader=1
-      [ -n "`echo ${php_extensions} | grep -w ioncube`" ] && pecl_ioncube=1
-      [ -n "`echo ${php_extensions} | grep -w sourceguardian`" ] && pecl_sourceguardian=1
-      [ -n "`echo ${php_extensions} | grep -w imagick`" ] && pecl_imagick=1
-      [ -n "`echo ${php_extensions} | grep -w gmagick`" ] && pecl_gmagick=1
-      [ -n "`echo ${php_extensions} | grep -w fileinfo`" ] && pecl_fileinfo=1
-      [ -n "`echo ${php_extensions} | grep -w imap`" ] && pecl_imap=1
-      [ -n "`echo ${php_extensions} | grep -w ldap`" ] && pecl_ldap=1
-      [ -n "`echo ${php_extensions} | grep -w calendar`" ] && pecl_calendar=1
-      [ -n "`echo ${php_extensions} | grep -w phalcon`" ] && pecl_phalcon=1
-      [ -n "`echo ${php_extensions} | grep -w yaf`" ] && pecl_yaf=1
-      [ -n "`echo ${php_extensions} | grep -w yar`" ] && pecl_yar=1
-      [ -n "`echo ${php_extensions} | grep -w redis`" ] && pecl_redis=1
-      [ -n "`echo ${php_extensions} | grep -w memcached`" ] && pecl_memcached=1
-      [ -n "`echo ${php_extensions} | grep -w memcache`" ] && pecl_memcache=1
-      [ -n "`echo ${php_extensions} | grep -w mongodb`" ] && pecl_mongodb=1
-      [ -n "`echo ${php_extensions} | grep -w swoole`" ] && pecl_swoole=1
-      [ -n "`echo ${php_extensions} | grep -w xdebug`" ] && pecl_xdebug=1
-      ;;
-    --node)
-      node_flag=y; shift 1
-      [ -e "${node_install_dir}/bin/node" ] && { echo "${CWARNING}Nodejs already installed! ${CEND}"; unset node_flag; }
-      ;;
-    --tomcat_option)
-      tomcat_option=$2; shift 2
-      [[ ! ${tomcat_option} =~ ^[1-4]$ ]] && { echo "${CWARNING}tomcat_option input error! Please only input number 1~4${CEND}"; exit 1; }
-      [ -e "$tomcat_install_dir/conf/server.xml" ] && { echo "${CWARNING}Tomcat already installed! ${CEND}" ; unset tomcat_option; }
-      ;;
-    --jdk_option)
-      jdk_option=$2; shift 2
-      [[ ! ${jdk_option} =~ ^[1-4]$ ]] && { echo "${CWARNING}jdk_option input error! Please only input number 1~4${CEND}"; exit 1; }
-      ;;
-    --db_option)
-      db_option=$2; shift 2
-      if [[ "${db_option}" =~ ^[1-9]$|^1[0-2]$ ]]; then
-        [ -d "${db_install_dir}/support-files" ] && { echo "${CWARNING}MySQL already installed! ${CEND}"; unset db_option; }
-      elif [ "${db_option}" == '13' ]; then
-        [ -e "${pgsql_install_dir}/bin/psql" ] && { echo "${CWARNING}PostgreSQL already installed! ${CEND}"; unset db_option; }
-      elif [ "${db_option}" == '14' ]; then
-        [ -e "${mongo_install_dir}/bin/mongo" ] && { echo "${CWARNING}MongoDB already installed! ${CEND}"; unset db_option; }
-      else
-        echo "${CWARNING}db_option input error! Please only input number 1~14${CEND}"
-        exit 1
-      fi
-      ;;
-    --dbrootpwd)
-      dbrootpwd=$2; shift 2
-      dbpostgrespwd="${dbrootpwd}"
-      dbmongopwd="${dbrootpwd}"
-      ;;
-    --dbinstallmethod)
-      dbinstallmethod=$2; shift 2
-      [[ ! ${dbinstallmethod} =~ ^[1-2]$ ]] && { echo "${CWARNING}dbinstallmethod input error! Please only input number 1~2${CEND}"; exit 1; }
-      ;;
-    --pureftpd)
-      pureftpd_flag=y; shift 1
-      [ -e "${pureftpd_install_dir}/sbin/pure-ftpwho" ] && { echo "${CWARNING}Pure-FTPd already installed! ${CEND}"; unset pureftpd_flag; }
-      ;;
-    --redis)
-      redis_flag=y; shift 1
-      [ -e "${redis_install_dir}/bin/redis-server" ] && { echo "${CWARNING}redis-server already installed! ${CEND}"; unset redis_flag; }
-      ;;
-    --memcached)
-      memcached_flag=y; shift 1
-      [ -e "${memcached_install_dir}/bin/memcached" ] && { echo "${CWARNING}memcached-server already installed! ${CEND}"; unset memcached_flag; }
-      ;;
-    --phpmyadmin)
-      phpmyadmin_flag=y; shift 1
-      [ -d "${wwwroot_dir}/default/phpMyAdmin" ] && { echo "${CWARNING}phpMyAdmin already installed! ${CEND}"; unset phpmyadmin_flag; }
-      ;;
-    --python)
-      python_flag=y; shift 1
-      ;;
-    --ssh_port)
-      ssh_port=$2; shift 2
-      ;;
-    --iptables)
-      iptables_flag=y; shift 1
-      ;;
-    --reboot)
-      reboot_flag=y; shift 1
-      ;;
-    --)
-      shift
-      ;;
-    *)
-      echo "${CWARNING}ERROR: unknown argument! ${CEND}" && Show_Help && exit 1
-      ;;
+  -h | --help)
+    Show_Help
+    exit 0
+    ;;
+  -v | -V | --version)
+    version
+    exit 0
+    ;;
+  --nginx_option)
+    nginx_option=$2
+    shift 2
+    [[ ! ${nginx_option} =~ ^[1-4]$ ]] && {
+      echo "${CWARNING}nginx_option input error! Please only input number 1~5${CEND}"
+      exit 1
+    }
+    [ -e "${nginx_install_dir}/sbin/nginx" ] && {
+      echo "${CWARNING}Nginx already installed! ${CEND}"
+      unset nginx_option
+    }
+    [ -e "${tengine_install_dir}/sbin/nginx" ] && {
+      echo "${CWARNING}Tengine already installed! ${CEND}"
+      unset nginx_option
+    }
+    [ -e "${openresty_install_dir}/nginx/sbin/nginx" ] && {
+      echo "${CWARNING}OpenResty already installed! ${CEND}"
+      unset nginx_option
+    }
+    [ -e "${caddy_install_dir}/bin/caddy" ] && {
+      echo "${CWARNING}Caddy already installed! ${CEND}"
+      unset nginx_option
+    }
+    ;;
+  --apache)
+    apache_flag=y
+    shift 1
+    [ -e "${apache_install_dir}/bin/httpd" ] && {
+      echo "${CWARNING}Aapche already installed! ${CEND}"
+      unset apache_flag
+    }
+    ;;
+  --apache_mode_option)
+    apache_mode_option=$2
+    shift 2
+    [[ ! ${apache_mode_option} =~ ^[1-2]$ ]] && {
+      echo "${CWARNING}apache_mode_option input error! Please only input number 1~2${CEND}"
+      exit 1
+    }
+    ;;
+  --apache_mpm_option)
+    apache_mpm_option=$2
+    shift 2
+    [[ ! ${apache_mpm_option} =~ ^[1-3]$ ]] && {
+      echo "${CWARNING}apache_mpm_option input error! Please only input number 1~3${CEND}"
+      exit 1
+    }
+    ;;
+  --php_option)
+    php_option=$2
+    shift 2
+    [[ ! ${php_option} =~ ^[1-9]$|^1[0-3]$ ]] && {
+      echo "${CWARNING}php_option input error! Please only input number 1~12${CEND}"
+      exit 1
+    }
+    [ -e "${php_install_dir}/bin/phpize" ] && {
+      echo "${CWARNING}PHP already installed! ${CEND}"
+      unset php_option
+    }
+    ;;
+  --mphp_ver)
+    mphp_ver=$2
+    mphp_flag=y
+    shift 2
+    [[ ! "${mphp_ver}" =~ ^5[3-6]$|^7[0-4]$|^8[0-3]$ ]] && {
+      echo "${CWARNING}mphp_ver input error! Please only input number 53~82${CEND}"
+      exit 1
+    }
+    ;;
+  --mphp_addons)
+    mphp_addons_flag=y
+    shift 1
+    ;;
+  --phpcache_option)
+    phpcache_option=$2
+    shift 2
+    ;;
+  --php_extensions)
+    php_extensions=$2
+    shift 2
+    [ -n "$(echo ${php_extensions} | grep -w zendguardloader)" ] && pecl_zendguardloader=1
+    [ -n "$(echo ${php_extensions} | grep -w ioncube)" ] && pecl_ioncube=1
+    [ -n "$(echo ${php_extensions} | grep -w sourceguardian)" ] && pecl_sourceguardian=1
+    [ -n "$(echo ${php_extensions} | grep -w imagick)" ] && pecl_imagick=1
+    [ -n "$(echo ${php_extensions} | grep -w gmagick)" ] && pecl_gmagick=1
+    [ -n "$(echo ${php_extensions} | grep -w fileinfo)" ] && pecl_fileinfo=1
+    [ -n "$(echo ${php_extensions} | grep -w imap)" ] && pecl_imap=1
+    [ -n "$(echo ${php_extensions} | grep -w ldap)" ] && pecl_ldap=1
+    [ -n "$(echo ${php_extensions} | grep -w calendar)" ] && pecl_calendar=1
+    [ -n "$(echo ${php_extensions} | grep -w phalcon)" ] && pecl_phalcon=1
+    [ -n "$(echo ${php_extensions} | grep -w yaf)" ] && pecl_yaf=1
+    [ -n "$(echo ${php_extensions} | grep -w yar)" ] && pecl_yar=1
+    [ -n "$(echo ${php_extensions} | grep -w redis)" ] && pecl_redis=1
+    [ -n "$(echo ${php_extensions} | grep -w memcached)" ] && pecl_memcached=1
+    [ -n "$(echo ${php_extensions} | grep -w memcache)" ] && pecl_memcache=1
+    [ -n "$(echo ${php_extensions} | grep -w mongodb)" ] && pecl_mongodb=1
+    [ -n "$(echo ${php_extensions} | grep -w swoole)" ] && pecl_swoole=1
+    [ -n "$(echo ${php_extensions} | grep -w xdebug)" ] && pecl_xdebug=1
+    ;;
+  --nodejs)
+    nodejs_flag=y
+    shift 1
+    [ -e "${nodejs_install_dir}/bin/node" ] && {
+      echo "${CWARNING}Nodejs already installed! ${CEND}"
+      unset nodejs_flag
+    }
+    ;;
+  --tomcat_option)
+    tomcat_option=$2
+    shift 2
+    [[ ! ${tomcat_option} =~ ^[1-4]$ ]] && {
+      echo "${CWARNING}tomcat_option input error! Please only input number 1~4${CEND}"
+      exit 1
+    }
+    [ -e "$tomcat_install_dir/conf/server.xml" ] && {
+      echo "${CWARNING}Tomcat already installed! ${CEND}"
+      unset tomcat_option
+    }
+    ;;
+  --jdk_option)
+    jdk_option=$2
+    shift 2
+    [[ ! ${jdk_option} =~ ^[1-3]$ ]] && {
+      echo "${CWARNING}jdk_option input error! Please only input number 1~3${CEND}"
+      exit 1
+    }
+    ;;
+  --db_option)
+    db_option=$2
+    shift 2
+    if [[ "${db_option}" =~ ^[1-9]$|^1[0-2]$ ]]; then
+      [ -d "${db_install_dir}/support-files" ] && {
+        echo "${CWARNING}MySQL already installed! ${CEND}"
+        unset db_option
+      }
+    elif [ "${db_option}" == '13' ]; then
+      [ -e "${pgsql_install_dir}/bin/psql" ] && {
+        echo "${CWARNING}PostgreSQL already installed! ${CEND}"
+        unset db_option
+      }
+    elif [ "${db_option}" == '14' ]; then
+      [ -e "${mongo_install_dir}/bin/mongo" ] && {
+        echo "${CWARNING}MongoDB already installed! ${CEND}"
+        unset db_option
+      }
+    else
+      echo "${CWARNING}db_option input error! Please only input number 1~14${CEND}"
+      exit 1
+    fi
+    ;;
+  --dbrootpwd)
+    dbrootpwd=$2
+    shift 2
+    dbpostgrespwd="${dbrootpwd}"
+    dbmongopwd="${dbrootpwd}"
+    ;;
+  --dbinstallmethod)
+    dbinstallmethod=$2
+    shift 2
+    [[ ! ${dbinstallmethod} =~ ^[1-2]$ ]] && {
+      echo "${CWARNING}dbinstallmethod input error! Please only input number 1~2${CEND}"
+      exit 1
+    }
+    ;;
+  --pureftpd)
+    pureftpd_flag=y
+    shift 1
+    [ -e "${pureftpd_install_dir}/sbin/pure-ftpwho" ] && {
+      echo "${CWARNING}Pure-FTPd already installed! ${CEND}"
+      unset pureftpd_flag
+    }
+    ;;
+  --redis)
+    redis_flag=y
+    shift 1
+    [ -e "${redis_install_dir}/bin/redis-server" ] && {
+      echo "${CWARNING}redis-server already installed! ${CEND}"
+      unset redis_flag
+    }
+    ;;
+  --memcached)
+    memcached_flag=y
+    shift 1
+    [ -e "${memcached_install_dir}/bin/memcached" ] && {
+      echo "${CWARNING}memcached-server already installed! ${CEND}"
+      unset memcached_flag
+    }
+    ;;
+  --phpmyadmin)
+    phpmyadmin_flag=y
+    shift 1
+    [ -d "${wwwroot_dir}/default/phpMyAdmin" ] && {
+      echo "${CWARNING}phpMyAdmin already installed! ${CEND}"
+      unset phpmyadmin_flag
+    }
+    ;;
+  --ssh_port)
+    ssh_port=$2
+    shift 2
+    ;;
+  --firewall)
+    firewall_flag=y
+    shift 1
+    ;;
+    --md5sum)
+      md5sum_flag=y; shift 1
+	;;
+  --reboot)
+    reboot_flag=y
+    shift 1
+    ;;
+  --)
+    shift
+    ;;
+  *)
+    echo "${CWARNING}ERROR: unknown argument! ${CEND}" && Show_Help && exit 1
+    ;;
   esac
 done
+
+# Check md5sum
+if [ ${ARG_NUM} == 0 ] && [ ! -e ~/.oneinstack ]; then
+  # Check md5sum
+  while :; do echo
+    read -e -p "Do you want to check md5sum? [y/n]: " md5sum_flag
+    if [[ ! ${md5sum_flag} =~ ^[y,n]$ ]]; then
+      echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+    else
+      break
+    fi
+  done
+fi
+if [ "${md5sum_flag}" == 'y' ]; then
+  [ -e "${oneinstack_dir}.tar.gz" ] && oneinstack_file=${oneinstack_dir}.tar.gz
+  [ -e "${oneinstack_dir}-full.tar.gz" ] && oneinstack_file=${oneinstack_dir}-full.tar.gz
+  oneinstack_tgz=${oneinstack_file##*/}
+  if [ -e "${oneinstack_file}" ]; then
+    now_oneinstack_md5=$(md5sum ${oneinstack_file} | awk '{print $1}')
+    latest_oneinStack_md5=$(curl --connect-timeout 3 -m 5 -s ${mirror_link}/md5sum.txt | grep ${oneinstack_tgz} | awk '{print $1}')
+    if [ "${now_oneinstack_md5}" != "${latest_oneinStack_md5}" ]; then
+      echo "${CFAILURE}Error: The md5 value of the installation package does not match the official website, please download again, url: ${mirror_link}/${oneinstack_tgz}${CEND}"
+      exit 1
+    fi
+  else
+    echo "${CFAILURE}Error: ${oneinstack_file} does not exist${CEND}"
+    exit 1
+  fi
+fi
 
 # Use default SSH port 22. If you use another SSH port on your server
 if [ -e "/etc/ssh/sshd_config" ]; then
@@ -235,10 +359,10 @@ fi
 
 if [ ${ARG_NUM} == 0 ]; then
   if [ ! -e ~/.oneinstack ]; then
-    # check iptables
+    # check firewall
     while :; do echo
-      read -e -p "Do you want to enable iptables? [y/n]: " iptables_flag
-      if [[ ! ${iptables_flag} =~ ^[y,n]$ ]]; then
+      read -e -p "Do you want to enable firewall? [y/n]: " firewall_flag
+      if [[ ! ${firewall_flag} =~ ^[y,n]$ ]]; then
         echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
       else
         break
@@ -254,142 +378,186 @@ if [ ${ARG_NUM} == 0 ]; then
     else
       if [ "${web_flag}" == 'y' ]; then
         # Nginx/Tegine/OpenResty
-        while :; do echo
-          echo 'Please select Nginx server:'
+        while :; do
+          echo
+          echo 'Please select Web server type:'
           echo -e "\t${CMSG}1${CEND}. Install Nginx"
           echo -e "\t${CMSG}2${CEND}. Install Tengine"
           echo -e "\t${CMSG}3${CEND}. Install OpenResty"
-          echo -e "\t${CMSG}4${CEND}. Do not install"
+          echo -e "\t${CMSG}4${CEND}. Install Caddy"
+          echo -e "\t${CMSG}5${CEND}. Do not install"
           read -e -p "Please input a number:(Default 1 press Enter) " nginx_option
           nginx_option=${nginx_option:-1}
-          if [[ ! ${nginx_option} =~ ^[1-4]$ ]]; then
-            echo "${CWARNING}input error! Please only input number 1~4${CEND}"
+          if [[ ! ${nginx_option} =~ ^[1-5]$ ]]; then
+            echo "${CWARNING}input error! Please only input number 1~5${CEND}"
           else
-            [ "${nginx_option}" != '4' -a -e "${nginx_install_dir}/sbin/nginx" ] && { echo "${CWARNING}Nginx already installed! ${CEND}"; unset nginx_option; }
-            [ "${nginx_option}" != '4' -a -e "${tengine_install_dir}/sbin/nginx" ] && { echo "${CWARNING}Tengine already installed! ${CEND}"; unset nginx_option; }
-            [ "${nginx_option}" != '4' -a -e "${openresty_install_dir}/nginx/sbin/nginx" ] && { echo "${CWARNING}OpenResty already installed! ${CEND}"; unset nginx_option; }
+            [ "${nginx_option}" != '5' -a -e "${nginx_install_dir}/sbin/nginx" ] && {
+              echo "${CWARNING}Nginx already installed! ${CEND}"
+              unset nginx_option
+            }
+            [ "${nginx_option}" != '5' -a -e "${tengine_install_dir}/sbin/nginx" ] && {
+              echo "${CWARNING}Tengine already installed! ${CEND}"
+              unset nginx_option
+            }
+            [ "${nginx_option}" != '5' -a -e "${openresty_install_dir}/nginx/sbin/nginx" ] && {
+              echo "${CWARNING}OpenResty already installed! ${CEND}"
+              unset nginx_option
+            }
+            [ "${nginx_option}" != '5' -a -e "${caddy_install_dir}/nginx/sbin/nginx" ] && {
+              echo "${CWARNING}Caddy already installed! ${CEND}"
+              unset nginx_option
+            }
             break
           fi
         done
-
-        # Apache
-        while :; do echo
-          read -e -p "Do you want to install Apache? [y/n]: " apache_flag
-          if [[ ! ${apache_flag} =~ ^[y,n]$ ]]; then
-            echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
-          else
-            [ "${apache_flag}" == 'y' -a -e "${apache_install_dir}/bin/httpd" ] && { echo "${CWARNING}Aapche already installed! ${CEND}"; unset apache_flag; }
-            break
-          fi
-        done
-        # Apache2.4 mode and Apache2.4 MPM
-        if [ "${apache_flag}" == 'y' -o -e "${apache_install_dir}/bin/httpd" ]; then
-          while :; do echo
-            echo 'Please select Apache mode:'
-            echo -e "\t${CMSG}1${CEND}. php-fpm"
-            echo -e "\t${CMSG}2${CEND}. mod_php"
-            read -e -p "Please input a number:(Default 1 press Enter) " apache_mode_option
-            apache_mode_option=${apache_mode_option:-1}
-            if [[ ! ${apache_mode_option} =~ ^[1-2]$ ]]; then
-              echo "${CWARNING}input error! Please only input number 1~2${CEND}"
+        if [[ ${nginx_option} =~ ^[1-3]$ ]]; then
+          # Apache
+          while :; do
+            echo
+            read -e -p "Do you want to install Apache? [y/n]: " apache_flag
+            if [[ ! ${apache_flag} =~ ^[y,n]$ ]]; then
+              echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
             else
+              [ "${apache_flag}" == 'y' -a -e "${apache_install_dir}/bin/httpd" ] && {
+                echo "${CWARNING}Aapche already installed! ${CEND}"
+                unset apache_flag
+              }
               break
             fi
           done
-          while :; do echo
-            echo 'Please select Apache MPM:'
-            echo -e "\t${CMSG}1${CEND}. event"
-            echo -e "\t${CMSG}2${CEND}. prefork"
-            echo -e "\t${CMSG}3${CEND}. worker"
-            read -e -p "Please input a number:(Default 1 press Enter) " apache_mpm_option
-            apache_mpm_option=${apache_mpm_option:-1}
-            if [[ ! ${apache_mpm_option} =~ ^[1-3]$ ]]; then
-              echo "${CWARNING}input error! Please only input number 1~3${CEND}"
+          # Apache2.4 mode and Apache2.4 MPM
+          if [ "${apache_flag}" == 'y' -o -e "${apache_install_dir}/bin/httpd" ]; then
+            while :; do
+              echo
+              echo 'Please select Apache mode:'
+              echo -e "\t${CMSG}1${CEND}. php-fpm"
+              echo -e "\t${CMSG}2${CEND}. mod_php"
+              read -e -p "Please input a number:(Default 1 press Enter) " apache_mode_option
+              apache_mode_option=${apache_mode_option:-1}
+              if [[ ! ${apache_mode_option} =~ ^[1-2]$ ]]; then
+                echo "${CWARNING}input error! Please only input number 1~2${CEND}"
+              else
+                break
+              fi
+            done
+            while :; do
+              echo
+              echo 'Please select Apache MPM:'
+              echo -e "\t${CMSG}1${CEND}. event"
+              echo -e "\t${CMSG}2${CEND}. prefork"
+              echo -e "\t${CMSG}3${CEND}. worker"
+              read -e -p "Please input a number:(Default 1 press Enter) " apache_mpm_option
+              apache_mpm_option=${apache_mpm_option:-1}
+              if [[ ! ${apache_mpm_option} =~ ^[1-3]$ ]]; then
+                echo "${CWARNING}input error! Please only input number 1~3${CEND}"
+              else
+                break
+              fi
+            done
+          fi
+          # Tomcat
+          while :; do
+            echo
+            echo 'Please select tomcat server:'
+            echo -e "\t${CMSG}1${CEND}. Install Tomcat-10"
+            echo -e "\t${CMSG}2${CEND}. Install Tomcat-9"
+            echo -e "\t${CMSG}3${CEND}. Install Tomcat-8"
+            echo -e "\t${CMSG}4${CEND}. Install Tomcat-7"
+            echo -e "\t${CMSG}5${CEND}. Do not install"
+            read -e -p "Please input a number:(Default 5 press Enter) " tomcat_option
+            tomcat_option=${tomcat_option:-5}
+            if [[ ! ${tomcat_option} =~ ^[1-5]$ ]]; then
+              echo "${CWARNING}input error! Please only input number 1~5${CEND}"
             else
+              [ "${tomcat_option}" != '5' -a -e "$tomcat_install_dir/conf/server.xml" ] && {
+                echo "${CWARNING}Tomcat already installed! ${CEND}"
+                unset tomcat_option
+              }
+              if [[ "${tomcat_option}" =~ ^1$ ]]; then
+                while :; do
+                  echo
+                  echo 'Please select JDK version:'
+                  echo -e "\t${CMSG}2${CEND}. Install openjdk-11-jdk"
+                  echo -e "\t${CMSG}3${CEND}. Install openjdk-17-jdk"
+                  read -e -p "Please input a number:(Default 1 press Enter) " jdk_option
+                  jdk_option=${jdk_option:-2}
+                  if [[ ! ${jdk_option} =~ ^[2-3]$ ]]; then
+                    echo "${CWARNING}input error! Please only input number 2~3${CEND}"
+                  else
+                    break
+                  fi
+                done
+              elif [[ "${tomcat_option}" =~ ^[2-3]$ ]]; then
+                while :; do
+                  echo
+                  echo 'Please select JDK version:'
+                  echo -e "\t${CMSG}1${CEND}. Install openjdk-8-jdk"
+                  echo -e "\t${CMSG}2${CEND}. Install openjdk-11-jdk"
+                  echo -e "\t${CMSG}3${CEND}. Install openjdk-17-jdk"
+                  read -e -p "Please input a number:(Default 1 press Enter) " jdk_option
+                  jdk_option=${jdk_option:-1}
+                  if [[ ! ${jdk_option} =~ ^[1-3]$ ]]; then
+                    echo "${CWARNING}input error! Please only input number 1~3${CEND}"
+                  else
+                    break
+                  fi
+                done
+              elif [ "${tomcat_option}" == '4' ]; then
+                while :; do
+                  echo
+                  echo 'Please select JDK version:'
+                  echo -e "\t${CMSG}1${CEND}. Install openjdk-8-jdk"
+                  read -e -p "Please input a number:(Default 1 press Enter) " jdk_option
+                  jdk_option=${jdk_option:-1}
+                  if [[ ! ${jdk_option} =~ ^1$ ]]; then
+                    echo "${CWARNING}input error! Please only input number 1${CEND}"
+                  else
+                    break
+                  fi
+                done
+              fi
+              break
+            fi
+          done
+        elif [ "${nginx_option}" == '4' ]; then
+          # Caddy
+          while :; do
+            echo
+            read -e -p "Do you want to install Caddy? [y/n]: " caddy_flag
+            if [[ ! ${caddy_flag} =~ ^[y,n]$ ]]; then
+              echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
+            else
+              [ "${caddy_flag}" == 'y' -a -e "${caddy_install_dir}/bin/caddy" ] && {
+                echo "${CWARNING}Caddy already installed! ${CEND}"
+                unset caddy_flag
+              }
               break
             fi
           done
         fi
-        # Tomcat
-        while :; do echo
-          echo 'Please select tomcat server:'
-          echo -e "\t${CMSG}1${CEND}. Install Tomcat-10"
-          echo -e "\t${CMSG}2${CEND}. Install Tomcat-9"
-          echo -e "\t${CMSG}3${CEND}. Install Tomcat-8"
-          echo -e "\t${CMSG}4${CEND}. Install Tomcat-7"
-          echo -e "\t${CMSG}5${CEND}. Do not install"
-          read -e -p "Please input a number:(Default 5 press Enter) " tomcat_option
-          tomcat_option=${tomcat_option:-5}
-          if [[ ! ${tomcat_option} =~ ^[1-5]$ ]]; then
-            echo "${CWARNING}input error! Please only input number 1~5${CEND}"
-          else
-            [ "${tomcat_option}" != '5' -a -e "$tomcat_install_dir/conf/server.xml" ] && { echo "${CWARNING}Tomcat already installed! ${CEND}" ; unset tomcat_option; }
-            if [[ "${tomcat_option}" =~ ^[1-2]$ ]]; then
-              while :; do echo
-                echo 'Please select JDK version:'
-                echo -e "\t${CMSG}1${CEND}. Install JDK-11.0"
-                echo -e "\t${CMSG}2${CEND}. Install JDK-1.8"
-                read -e -p "Please input a number:(Default 1 press Enter) " jdk_option
-                jdk_option=${jdk_option:-1}
-                if [[ ! ${jdk_option} =~ ^[1-2]$ ]]; then
-                  echo "${CWARNING}input error! Please only input number 1~2${CEND}"
-                else
-                  break
-                fi
-              done
-            elif [ "${tomcat_option}" == '3' ]; then
-              while :; do echo
-                echo 'Please select JDK version:'
-                echo -e "\t${CMSG}1${CEND}. Install JDK-11.0"
-                echo -e "\t${CMSG}2${CEND}. Install JDK-1.8"
-                echo -e "\t${CMSG}3${CEND}. Install JDK-1.7"
-                read -e -p "Please input a number:(Default 2 press Enter) " jdk_option
-                jdk_option=${jdk_option:-2}
-                if [[ ! ${jdk_option} =~ ^[1-3]$ ]]; then
-                  echo "${CWARNING}input error! Please only input number 1~3${CEND}"
-                else
-                  break
-                fi
-              done
-            elif [ "${tomcat_option}" == '4' ]; then
-              while :; do echo
-                echo 'Please select JDK version:'
-                echo -e "\t${CMSG}2${CEND}. Install JDK-1.8"
-                echo -e "\t${CMSG}3${CEND}. Install JDK-1.7"
-                echo -e "\t${CMSG}4${CEND}. Install JDK-1.6"
-                read -e -p "Please input a number:(Default 3 press Enter) " jdk_option
-                jdk_option=${jdk_option:-3}
-                if [[ ! ${jdk_option} =~ ^[2-4]$ ]]; then
-                  echo "${CWARNING}input error! Please only input number 2~4${CEND}"
-                else
-                  break
-                fi
-              done
-            fi
-            break
-          fi
-        done
       fi
       break
     fi
   done
 
   # choice database
-  while :; do echo
+  while :; do
+    echo
     read -e -p "Do you want to install Database? [y/n]: " db_flag
     if [[ ! ${db_flag} =~ ^[y,n]$ ]]; then
       echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
       if [ "${db_flag}" == 'y' ]; then
-        while :; do echo
+        while :; do
+          echo
           echo 'Please select a version of the Database:'
           echo -e "\t${CMSG} 1${CEND}. Install MySQL-8.0"
           echo -e "\t${CMSG} 2${CEND}. Install MySQL-5.7"
           echo -e "\t${CMSG} 3${CEND}. Install MySQL-5.6"
           echo -e "\t${CMSG} 4${CEND}. Install MySQL-5.5"
-          echo -e "\t${CMSG} 5${CEND}. Install MariaDB-10.5"
-          echo -e "\t${CMSG} 6${CEND}. Install MariaDB-10.4"
-          echo -e "\t${CMSG} 7${CEND}. Install MariaDB-10.3"
+          echo -e "\t${CMSG} 5${CEND}. Install MariaDB-10.11"
+          echo -e "\t${CMSG} 6${CEND}. Install MariaDB-10.5"
+          echo -e "\t${CMSG} 7${CEND}. Install MariaDB-10.4"
           echo -e "\t${CMSG} 8${CEND}. Install MariaDB-5.5"
           echo -e "\t${CMSG} 9${CEND}. Install Percona-8.0"
           echo -e "\t${CMSG}10${CEND}. Install Percona-5.7"
@@ -399,7 +567,6 @@ if [ ${ARG_NUM} == 0 ]; then
           echo -e "\t${CMSG}14${CEND}. Install MongoDB"
           read -e -p "Please input a number:(Default 2 press Enter) " db_option
           db_option=${db_option:-2}
-          [[ "${db_option}" =~ ^9$|^14$ ]] && [ "${OS_BIT}" == '32' ] && { echo "${CWARNING}By not supporting 32-bit! ${CEND}"; continue; }
           if [[ "${db_option}" =~ ^[1-9]$|^1[0-4]$ ]]; then
             if [ "${db_option}" == '13' ]; then
               [ -e "${pgsql_install_dir}/bin/psql" ] && { echo "${CWARNING}PostgreSQL already installed! ${CEND}"; unset db_option; break; }
@@ -478,10 +645,13 @@ if [ ${ARG_NUM} == 0 ]; then
           echo -e "\t${CMSG} 8${CEND}. Install php-7.3"
           echo -e "\t${CMSG} 9${CEND}. Install php-7.4"
           echo -e "\t${CMSG}10${CEND}. Install php-8.0"
+          echo -e "\t${CMSG}11${CEND}. Install php-8.1"
+          echo -e "\t${CMSG}12${CEND}. Install php-8.2"
+          echo -e "\t${CMSG}13${CEND}. Install php-8.3"
           read -e -p "Please input a number:(Default 7 press Enter) " php_option
           php_option=${php_option:-7}
-          if [[ ! ${php_option} =~ ^[1-9]$|^10$ ]]; then
-            echo "${CWARNING}input error! Please only input number 1~10${CEND}"
+          if [[ ! ${php_option} =~ ^[1-9]$|^1[0-3]$ ]]; then
+            echo "${CWARNING}input error! Please only input number 1~13${CEND}"
           else
             break
           fi
@@ -498,7 +668,7 @@ if [ ${ARG_NUM} == 0 ]; then
   fi
 
   # PHP opcode cache and extensions
-  if [[ ${php_option} =~ ^[1-9]$|^10$ ]] || [ -e "${php_install_dir}/bin/phpize" ]; then
+  if [[ ${php_option} =~ ^[1-9]$|^1[0-3]$ ]] || [ -e "${php_install_dir}/bin/phpize" ]; then
     while :; do echo
       read -e -p "Do you want to install opcode cache of the PHP? [y/n]: " phpcache_flag
       if [[ ! ${phpcache_flag} =~ ^[y,n]$ ]]; then
@@ -509,8 +679,8 @@ if [ ${ARG_NUM} == 0 ]; then
             while :; do
               echo 'Please select a opcode cache of the PHP:'
               echo -e "\t${CMSG}1${CEND}. Install Zend OPcache"
-              echo -e "\t${CMSG}2${CEND}. Install XCache"
-              echo -e "\t${CMSG}3${CEND}. Install APCU"
+              echo -e "\t${CMSG}2${CEND}. Install APCU"
+              echo -e "\t${CMSG}3${CEND}. Install XCache"
               echo -e "\t${CMSG}4${CEND}. Install eAccelerator-0.9"
               read -e -p "Please input a number:(Default 1 press Enter) " phpcache_option
               phpcache_option=${phpcache_option:-1}
@@ -525,8 +695,8 @@ if [ ${ARG_NUM} == 0 ]; then
             while :; do
               echo 'Please select a opcode cache of the PHP:'
               echo -e "\t${CMSG}1${CEND}. Install Zend OPcache"
-              echo -e "\t${CMSG}2${CEND}. Install XCache"
-              echo -e "\t${CMSG}3${CEND}. Install APCU"
+              echo -e "\t${CMSG}2${CEND}. Install APCU"
+              echo -e "\t${CMSG}3${CEND}. Install XCache"
               echo -e "\t${CMSG}4${CEND}. Install eAccelerator-1.0-dev"
               read -e -p "Please input a number:(Default 1 press Enter) " phpcache_option
               phpcache_option=${phpcache_option:-1}
@@ -541,8 +711,8 @@ if [ ${ARG_NUM} == 0 ]; then
             while :; do
               echo 'Please select a opcode cache of the PHP:'
               echo -e "\t${CMSG}1${CEND}. Install Zend OPcache"
-              echo -e "\t${CMSG}2${CEND}. Install XCache"
-              echo -e "\t${CMSG}3${CEND}. Install APCU"
+              echo -e "\t${CMSG}2${CEND}. Install APCU"
+              echo -e "\t${CMSG}3${CEND}. Install XCache"
               read -e -p "Please input a number:(Default 1 press Enter) " phpcache_option
               phpcache_option=${phpcache_option:-1}
               if [[ ! ${phpcache_option} =~ ^[1-3]$ ]]; then
@@ -556,8 +726,8 @@ if [ ${ARG_NUM} == 0 ]; then
             while :; do
               echo 'Please select a opcode cache of the PHP:'
               echo -e "\t${CMSG}1${CEND}. Install Zend OPcache"
-              echo -e "\t${CMSG}2${CEND}. Install XCache"
-              echo -e "\t${CMSG}3${CEND}. Install APCU"
+              echo -e "\t${CMSG}2${CEND}. Install APCU"
+              echo -e "\t${CMSG}3${CEND}. Install XCache"
               read -e -p "Please input a number:(Default 1 press Enter) " phpcache_option
               phpcache_option=${phpcache_option:-1}
               if [[ ! ${phpcache_option} =~ ^[1-3]$ ]]; then
@@ -567,15 +737,15 @@ if [ ${ARG_NUM} == 0 ]; then
               fi
             done
           fi
-          if [[ ${php_option} =~ ^[5-9]$|^10$ ]] || [[ "${PHP_main_ver}" =~ ^7.[0-4]$|^8.0$ ]]; then
+          if [[ ${php_option} =~ ^[5-9]$|^1[0-3]$ ]] || [[ "${PHP_main_ver}" =~ ^7.[0-4]$|^8.[0-3]$ ]]; then
             while :; do
               echo 'Please select a opcode cache of the PHP:'
               echo -e "\t${CMSG}1${CEND}. Install Zend OPcache"
-              echo -e "\t${CMSG}3${CEND}. Install APCU"
+              echo -e "\t${CMSG}2${CEND}. Install APCU"
               read -e -p "Please input a number:(Default 1 press Enter) " phpcache_option
               phpcache_option=${phpcache_option:-1}
-              if [[ ! ${phpcache_option} =~ ^[1,3]$ ]]; then
-                echo "${CWARNING}input error! Please only input number 1,3${CEND}"
+              if [[ ! ${phpcache_option} =~ ^[1-2]$ ]]; then
+                echo "${CWARNING}input error! Please only input number 1~2${CEND}"
               else
                 break
               fi
@@ -586,7 +756,7 @@ if [ ${ARG_NUM} == 0 ]; then
       fi
     done
     # set xcache passwd
-    if [ "${phpcache_option}" == '2' ]; then
+    if [ "${phpcache_option}" == '3' ]; then
       while :; do
         read -e -p "Please input xcache admin password: " xcachepwd
         (( ${#xcachepwd} >= 5 )) && { xcachepwd_md5=$(echo -n "${xcachepwd}" | md5sum | awk '{print $1}') ; break ; } || echo "${CFAILURE}xcache admin password least 5 characters! ${CEND}"
@@ -650,11 +820,11 @@ if [ ${ARG_NUM} == 0 ]; then
 
   # check Nodejs
   while :; do echo
-    read -e -p "Do you want to install Nodejs? [y/n]: " node_flag
-    if [[ ! ${node_flag} =~ ^[y,n]$ ]]; then
+    read -e -p "Do you want to install Nodejs? [y/n]: " nodejs_flag
+    if [[ ! ${nodejs_flag} =~ ^[y,n]$ ]]; then
       echo "${CWARNING}input error! Please only input 'y' or 'n'${CEND}"
     else
-      [ "${node_flag}" == 'y' -a -e "${node_install_dir}/bin/node" ] && { echo "${CWARNING}Nodejs already installed! ${CEND}"; unset node_flag; }
+      [ "${nodejs_flag}" == 'y' -a -e "${nodejs_install_dir}/bin/node" ] && { echo "${CWARNING}Nodejs already installed! ${CEND}"; unset nodejs_flag; }
       break
     fi
   done
@@ -671,7 +841,7 @@ if [ ${ARG_NUM} == 0 ]; then
   done
 
   # check phpMyAdmin
-  if [[ ${php_option} =~ ^[1-9]$|^10$ ]] || [ -e "${php_install_dir}/bin/phpize" ]; then
+  if [[ ${php_option} =~ ^[1-9]$|^1[0-3]$ ]] || [ -e "${php_install_dir}/bin/phpize" ]; then
     while :; do echo
       read -e -p "Do you want to install phpMyAdmin? [y/n]: " phpmyadmin_flag
       if [[ ! ${phpmyadmin_flag} =~ ^[y,n]$ ]]; then
@@ -706,35 +876,32 @@ if [ ${ARG_NUM} == 0 ]; then
   done
 fi
 
-if [[ ${nginx_option} =~ ^[1-3]$ ]] || [ "${apache_flag}" == 'y' ] || [[ ${tomcat_option} =~ ^[1-4]$ ]]; then
+if [[ ${nginx_option} =~ ^[1-4]$ ]] || [ "${apache_flag}" == 'y' ] || [ "${caddy_flag}" == 'y' ] || [[ ${tomcat_option} =~ ^[1-4]$ ]]; then
   [ ! -d ${wwwroot_dir}/default ] && mkdir -p ${wwwroot_dir}/default
   [ ! -d ${wwwlogs_dir} ] && mkdir -p ${wwwlogs_dir}
 fi
 [ -d /data ] && chmod 755 /data
 
-# install wget gcc curl python
+# install wget gcc curl
 if [ ! -e ~/.oneinstack ]; then
   downloadDepsSrc=1
   [ "${PM}" == 'apt-get' ] && apt-get -y update > /dev/null
-  [ "${PM}" == 'yum' ] && yum clean all
-  ${PM} -y install wget gcc curl python
-  [ "${CentOS_ver}" == '8' ] && { yum -y install python36; sudo alternatives --set python /usr/bin/python3; }
-  clear
+  [ "${PM}" == 'yum' ] && yum clean all > /dev/null
+  ${PM} -y install wget gcc curl > /dev/null
 fi
 
 # get the IP information
-IPADDR=$(./include/get_ipaddr.py)
-PUBLIC_IPADDR=$(./include/get_public_ipaddr.py)
-IPADDR_COUNTRY=$(./include/get_ipaddr_state.py ${PUBLIC_IPADDR})
+IPADDR=$(./include/ois.${ARCH} ip_local)
+OUTIP_STATE=$(./include/ois.${ARCH} ip_state)
+
+# openSSL
+. ./include/openssl.sh
 
 # Check download source packages
 . ./include/check_download.sh
+
 [ "${armplatform}" == "y" ] && dbinstallmethod=2
 checkDownload 2>&1 | tee -a ${oneinstack_dir}/install.log
-
-# del openssl for jcloud
-[ -e "/usr/local/bin/openssl" ] && rm -rf /usr/local/bin/openssl
-[ -e "/usr/local/include/openssl" ] && rm -rf /usr/local/include/openssl
 
 # get OS Memory
 . ./include/memory.sh
@@ -742,16 +909,16 @@ checkDownload 2>&1 | tee -a ${oneinstack_dir}/install.log
 if [ ! -e ~/.oneinstack ]; then
   # Check binary dependencies packages
   . ./include/check_sw.sh
-  case "${LikeOS}" in
-    "CentOS")
-      installDepsCentOS 2>&1 | tee ${oneinstack_dir}/install.log
-      . include/init_CentOS.sh 2>&1 | tee -a ${oneinstack_dir}/install.log
+  case "${Family}" in
+    "rhel")
+      installDepsRHEL 2>&1 | tee ${oneinstack_dir}/install.log
+      . include/init_RHEL.sh 2>&1 | tee -a ${oneinstack_dir}/install.log
       ;;
-    "Debian")
+    "debian")
       installDepsDebian 2>&1 | tee ${oneinstack_dir}/install.log
       . include/init_Debian.sh 2>&1 | tee -a ${oneinstack_dir}/install.log
       ;;
-    "Ubuntu")
+    "ubuntu")
       installDepsUbuntu 2>&1 | tee ${oneinstack_dir}/install.log
       . include/init_Ubuntu.sh 2>&1 | tee -a ${oneinstack_dir}/install.log
       ;;
@@ -763,22 +930,18 @@ fi
 # start Time
 startTime=`date +%s`
 
+# openSSL
+Install_openSSL | tee -a ${oneinstack_dir}/install.log
+
 # Jemalloc
 if [[ ${nginx_option} =~ ^[1-3]$ ]] || [[ "${db_option}" =~ ^[1-9]$|^1[0-2]$ ]]; then
   . include/jemalloc.sh
   Install_Jemalloc | tee -a ${oneinstack_dir}/install.log
 fi
 
-# openSSL
-if [[ ${tomcat_option} =~ ^[1-4]$ ]] || [ "${apache_flag}" == 'y' ] || [[ ${php_option} =~ ^[1-9]$|^10$ ]] || [[ "${mphp_ver}" =~ ^5[3-6]$|^7[0-4]$|^80$ ]]; then
-  . include/openssl.sh
-  Install_openSSL | tee -a ${oneinstack_dir}/install.log
-fi
-
 # Database
 case "${db_option}" in
   1)
-    [ "${LikeOS}" == 'CentOS' ] && [ ${CentOS_ver} -le 6 >/dev/null 2>&1 ] && dbinstallmethod=1 && checkDownload
     . include/mysql-8.0.sh
     Install_MySQL80 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
@@ -795,24 +958,23 @@ case "${db_option}" in
     Install_MySQL55 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
   5)
+    . include/mariadb-10.11.sh
+    Install_MariaDB1011 2>&1 | tee -a ${oneinstack_dir}/install.log
+    ;;
+  6)
     . include/mariadb-10.5.sh
     Install_MariaDB105 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
-  6)
+  7)
     . include/mariadb-10.4.sh
     Install_MariaDB104 2>&1 | tee -a ${oneinstack_dir}/install.log
-    ;;
-  7)
-    . include/mariadb-10.3.sh
-    Install_MariaDB103 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
   8)
     . include/mariadb-5.5.sh
     Install_MariaDB55 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
   9)
-    [ "${LikeOS}" == 'CentOS' ] && [ ${CentOS_ver} -le 6 >/dev/null 2>&1 ] && dbinstallmethod=1 && checkDownload
-    [ "${LikeOS}" == 'CentOS' ] && [ "${CentOS_ver}" == '8' ] && dbinstallmethod=2 && checkDownload
+    [ "${Family}" == 'rhel' ] && [ "${RHEL_ver}" == '8' ] && dbinstallmethod=2 && checkDownload
     . include/percona-8.0.sh
     Install_Percona80 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
@@ -840,18 +1002,23 @@ esac
 
 # Nginx server
 case "${nginx_option}" in
-  1)
-    . include/nginx.sh
-    Install_Nginx 2>&1 | tee -a ${oneinstack_dir}/install.log
-    ;;
-  2)
-    . include/tengine.sh
-    Install_Tengine 2>&1 | tee -a ${oneinstack_dir}/install.log
-    ;;
-  3)
-    . include/openresty.sh
-    Install_OpenResty 2>&1 | tee -a ${oneinstack_dir}/install.log
-    ;;
+1)
+  . include/nginx.sh
+  Install_Nginx 2>&1 | tee -a ${oneinstack_dir}/install.log
+  ;;
+2)
+  . include/tengine.sh
+  Install_Tengine 2>&1 | tee -a ${oneinstack_dir}/install.log
+  ;;
+3)
+  . include/openresty.sh
+  Install_OpenResty 2>&1 | tee -a ${oneinstack_dir}/install.log
+  ;;
+4)
+  . include/caddy.sh
+  Install_Caddy 2>&1 | tee -a ${oneinstack_dir}/install.log
+  caddy_flag='y'
+  ;;
 esac
 
 # Apache
@@ -904,6 +1071,18 @@ case "${php_option}" in
     . include/php-8.0.sh
     Install_PHP80 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
+  11)
+    . include/php-8.1.sh
+    Install_PHP81 2>&1 | tee -a ${oneinstack_dir}/install.log
+    ;;
+  12)
+    . include/php-8.2.sh
+    Install_PHP82 2>&1 | tee -a ${oneinstack_dir}/install.log
+    ;;
+  13)
+    . include/php-8.3.sh
+    Install_PHP83 2>&1 | tee -a ${oneinstack_dir}/install.log
+    ;;
 esac
 
 PHP_addons() {
@@ -914,12 +1093,12 @@ PHP_addons() {
       Install_ZendOPcache 2>&1 | tee -a ${oneinstack_dir}/install.log
       ;;
     2)
-      . include/xcache.sh
-      Install_XCache 2>&1 | tee -a ${oneinstack_dir}/install.log
-      ;;
-    3)
       . include/apcu.sh
       Install_APCU 2>&1 | tee -a ${oneinstack_dir}/install.log
+      ;;
+    3)
+      . include/xcache.sh
+      Install_XCache 2>&1 | tee -a ${oneinstack_dir}/install.log
       ;;
     4)
       . include/eaccelerator.sh
@@ -1056,20 +1235,16 @@ fi
 # JDK
 case "${jdk_option}" in
   1)
-    . include/jdk-11.0.sh
-    Install_JDK110 2>&1 | tee -a ${oneinstack_dir}/install.log
+    . include/openjdk-8.sh
+    Install_OpenJDK8 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
   2)
-    . include/jdk-1.8.sh
-    Install_JDK18 2>&1 | tee -a ${oneinstack_dir}/install.log
+    . include/openjdk-11.sh
+    Install_OpenJDK11 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
   3)
-    . include/jdk-1.7.sh
-    Install_JDK17 2>&1 | tee -a ${oneinstack_dir}/install.log
-    ;;
-  4)
-    . include/jdk-1.6.sh
-    Install_JDK16 2>&1 | tee -a ${oneinstack_dir}/install.log
+    . include/openjdk-17.sh
+    Install_OpenJDK17 2>&1 | tee -a ${oneinstack_dir}/install.log
     ;;
 esac
 
@@ -1093,9 +1268,9 @@ case "${tomcat_option}" in
 esac
 
 # Nodejs
-if [ "${node_flag}" == 'y' ]; then
-  . include/node.sh
-  Install_Node 2>&1 | tee -a ${oneinstack_dir}/install.log
+if [ "${nodejs_flag}" == 'y' ]; then
+  . include/nodejs.sh
+  Install_Nodejs 2>&1 | tee -a ${oneinstack_dir}/install.log
 fi
 
 # Pure-FTPd
@@ -1131,12 +1306,6 @@ fi
 # get web_install_dir and db_install_dir
 . include/check_dir.sh
 
-# Python
-if [ "${python_flag}" == 'y' ]; then
-  . include/python.sh
-  Install_Python 2>&1 | tee -a ${oneinstack_dir}/install.log
-fi
-
 # Starting DB
 [ -d "/etc/mysql" ] && /bin/mv /etc/mysql{,_bk}
 [ -d "${db_install_dir}/support-files" ] && [ -z "`ps -ef | grep mysqld_safe | grep -v grep`" ] && service mysqld start
@@ -1152,6 +1321,7 @@ echo "####################Congratulations########################"
 echo "Total OneinStack Install Time: ${CQUESTION}${installTime}${CEND} minutes"
 [[ "${nginx_option}" =~ ^[1-3]$ ]] && echo -e "\n$(printf "%-32s" "Nginx install dir":)${CMSG}${web_install_dir}${CEND}"
 [ "${apache_flag}" == 'y' ] && echo -e "\n$(printf "%-32s" "Apache install dir":)${CMSG}${apache_install_dir}${CEND}"
+[ "${caddy_flag}" == 'y' ] && echo -e "\n$(printf "%-32s" "Caddy install dir":)${CMSG}${caddy_install_dir}${CEND}"
 [[ "${tomcat_option}" =~ ^[1-4]$ ]] && echo -e "\n$(printf "%-32s" "Tomcat install dir":)${CMSG}${tomcat_install_dir}${CEND}"
 [[ "${db_option}" =~ ^[1-9]$|^1[0-2]$ ]] && echo -e "\n$(printf "%-32s" "Database install dir:")${CMSG}${db_install_dir}${CEND}"
 [[ "${db_option}" =~ ^[1-9]$|^1[0-2]$ ]] && echo "$(printf "%-32s" "Database data dir:")${CMSG}${db_data_dir}${CEND}"
@@ -1165,12 +1335,12 @@ echo "Total OneinStack Install Time: ${CQUESTION}${installTime}${CEND} minutes"
 [ "${db_option}" == '14' ] && echo "$(printf "%-32s" "MongoDB data dir:")${CMSG}${mongo_data_dir}${CEND}"
 [ "${db_option}" == '14' ] && echo "$(printf "%-32s" "MongoDB user:")${CMSG}root${CEND}"
 [ "${db_option}" == '14' ] && echo "$(printf "%-32s" "MongoDB password:")${CMSG}${dbmongopwd}${CEND}"
-[[ "${php_option}" =~ ^[1-9]$|^10$ ]] && echo -e "\n$(printf "%-32s" "PHP install dir:")${CMSG}${php_install_dir}${CEND}"
+[[ "${php_option}" =~ ^[1-9]$|^1[0-2]$ ]] && echo -e "\n$(printf "%-32s" "PHP install dir:")${CMSG}${php_install_dir}${CEND}"
 [ "${phpcache_option}" == '1' ] && echo "$(printf "%-32s" "Opcache Control Panel URL:")${CMSG}http://${IPADDR}/ocp.php${CEND}"
-[ "${phpcache_option}" == '2' -a -e "${php_install_dir}/etc/php.d/04-xcache.ini" ] && echo "$(printf "%-32s" "xcache Control Panel URL:")${CMSG}http://${IPADDR}/xcache${CEND}"
-[ "${phpcache_option}" == '2' -a -e "${php_install_dir}/etc/php.d/04-xcache.ini" ] && echo "$(printf "%-32s" "xcache user:")${CMSG}admin${CEND}"
-[ "${phpcache_option}" == '2' -a -e "${php_install_dir}/etc/php.d/04-xcache.ini" ] && echo "$(printf "%-32s" "xcache password:")${CMSG}${xcachepwd}${CEND}"
-[ "${phpcache_option}" == '3' ] && echo "$(printf "%-32s" "APC Control Panel URL:")${CMSG}http://${IPADDR}/apc.php${CEND}"
+[ "${phpcache_option}" == '2' ] && echo "$(printf "%-32s" "APC Control Panel URL:")${CMSG}http://${IPADDR}/apc.php${CEND}"
+[ "${phpcache_option}" == '3' -a -e "${php_install_dir}/etc/php.d/04-xcache.ini" ] && echo "$(printf "%-32s" "xcache Control Panel URL:")${CMSG}http://${IPADDR}/xcache${CEND}"
+[ "${phpcache_option}" == '3' -a -e "${php_install_dir}/etc/php.d/04-xcache.ini" ] && echo "$(printf "%-32s" "xcache user:")${CMSG}admin${CEND}"
+[ "${phpcache_option}" == '3' -a -e "${php_install_dir}/etc/php.d/04-xcache.ini" ] && echo "$(printf "%-32s" "xcache password:")${CMSG}${xcachepwd}${CEND}"
 [ "${phpcache_option}" == '4' -a -e "${php_install_dir}/etc/php.d/02-eaccelerator.ini" ] && echo "$(printf "%-32s" "eAccelerator Control Panel URL:")${CMSG}http://${IPADDR}/control.php${CEND}"
 [ "${phpcache_option}" == '4' -a -e "${php_install_dir}/etc/php.d/02-eaccelerator.ini" ] && echo "$(printf "%-32s" "eAccelerator user:")${CMSG}admin${CEND}"
 [ "${phpcache_option}" == '4' -a -e "${php_install_dir}/etc/php.d/02-eaccelerator.ini" ] && echo "$(printf "%-32s" "eAccelerator password:")${CMSG}eAccelerator${CEND}"
@@ -1180,7 +1350,7 @@ echo "Total OneinStack Install Time: ${CQUESTION}${installTime}${CEND} minutes"
 [ "${phpmyadmin_flag}" == 'y' ] && echo "$(printf "%-32s" "phpMyAdmin Control Panel URL:")${CMSG}http://${IPADDR}/phpMyAdmin${CEND}"
 [ "${redis_flag}" == 'y' ] && echo -e "\n$(printf "%-32s" "redis install dir:")${CMSG}${redis_install_dir}${CEND}"
 [ "${memcached_flag}" == 'y' ] && echo -e "\n$(printf "%-32s" "memcached install dir:")${CMSG}${memcached_install_dir}${CEND}"
-if [[ ${nginx_option} =~ ^[1-3]$ ]] || [ "${apache_flag}" == 'y' ] || [[ ${tomcat_option} =~ ^[1-4]$ ]]; then
+if [[ ${nginx_option} =~ ^[1-4]$ ]] || [ "${apache_flag}" == 'y' ] || [[ ${tomcat_option} =~ ^[1-4]$ ]]; then
   echo -e "\n$(printf "%-32s" "Index URL:")${CMSG}http://${IPADDR}/${CEND}"
 fi
 if [ ${ARG_NUM} == 0 ]; then

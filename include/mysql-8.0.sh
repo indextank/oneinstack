@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -14,11 +14,11 @@ Install_MySQL80() {
   [ $? -ne 0 ] && useradd -M -s /sbin/nologin mysql
 
   [ ! -d "${mysql_install_dir}" ] && mkdir -p ${mysql_install_dir}
-  mkdir -p ${mysql_data_dir};chown mysql.mysql -R ${mysql_data_dir}
+  mkdir -p ${mysql_data_dir};chown mysql:mysql -R ${mysql_data_dir}
 
   if [ "${dbinstallmethod}" == "1" ]; then
-    tar xJf mysql-${mysql80_ver}-linux-glibc2.12-${SYS_BIT_b}.tar.xz
-    mv mysql-${mysql80_ver}-linux-glibc2.12-${SYS_BIT_b}/* ${mysql_install_dir}
+    tar xJf mysql-${mysql80_ver}-linux-glibc2.12-x86_64.tar.xz
+    mv mysql-${mysql80_ver}-linux-glibc2.12-x86_64/* ${mysql_install_dir}
     sed -i "s@/usr/local/mysql@${mysql_install_dir}@g" ${mysql_install_dir}/bin/mysqld_safe
   elif [ "${dbinstallmethod}" == "2" ]; then
     boostVersion2=$(echo ${boost_ver} | awk -F. '{print $1"_"$2"_"$3}')
@@ -38,6 +38,8 @@ Install_MySQL80() {
     -DWITH_MYISAM_STORAGE_ENGINE=1 \
     -DENABLED_LOCAL_INFILE=1 \
     -DFORCE_INSOURCE_BUILD=1 \
+    -DCMAKE_C_COMPILER=/usr/bin/gcc \
+    -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
     -DDEFAULT_CHARSET=utf8mb4
     make -j ${THREAD}
     make install
@@ -53,14 +55,14 @@ Install_MySQL80() {
     sed -i "s+^dbrootpwd.*+dbrootpwd='${dbrootpwd}'+" ../options.conf
     echo "${CSUCCESS}MySQL installed successfully! ${CEND}"
     if [ "${dbinstallmethod}" == "1" ]; then
-      rm -rf mysql-${mysql80_ver}-*-${SYS_BIT_b}
+      rm -rf mysql-${mysql80_ver}-*-x86_64
     elif [ "${dbinstallmethod}" == "2" ]; then
       rm -rf mysql-${mysql80_ver} boost_${boostVersion2}
     fi
   else
     rm -rf ${mysql_install_dir}
-    echo "${CFAILURE}MySQL install failed, Please contact the author! ${CEND}" && lsb_release -a
-    kill -9 $$
+    echo "${CFAILURE}MySQL install failed, Please contact the author! ${CEND}" && grep -Ew 'NAME|ID|ID_LIKE|VERSION_ID|PRETTY_NAME' /etc/os-release
+    kill -9 $$; exit 1;
   fi
 
   /bin/cp ${mysql_install_dir}/support-files/mysql.server /etc/init.d/mysqld
@@ -156,7 +158,6 @@ innodb_lock_wait_timeout = 120
 bulk_insert_buffer_size = 8M
 myisam_sort_buffer_size = 8M
 myisam_max_sort_file_size = 10G
-myisam_repair_threads = 1
 
 interactive_timeout = 28800
 wait_timeout = 28800
@@ -199,7 +200,7 @@ EOF
   ${mysql_install_dir}/bin/mysqld --initialize-insecure --user=mysql --basedir=${mysql_install_dir} --datadir=${mysql_data_dir}
 
   [ "${Wsl}" == true ] && chmod 600 /etc/my.cnf
-  chown mysql.mysql -R ${mysql_data_dir}
+  chown mysql:mysql -R ${mysql_data_dir}
   [ -d "/etc/mysql" ] && /bin/mv /etc/mysql{,_bk}
   service mysqld start
   [ -z "$(grep ^'export PATH=' /etc/profile)" ] && echo "export PATH=${mysql_install_dir}/bin:\$PATH" >> /etc/profile

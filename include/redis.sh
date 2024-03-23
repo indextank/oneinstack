@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -12,10 +12,6 @@ Install_redis_server() {
   pushd ${oneinstack_dir}/src > /dev/null
   tar xzf redis-${redis_ver}.tar.gz
   pushd redis-${redis_ver} > /dev/null
-  if [ "${OS_BIT}" == '32' -a "${armplatform}" != 'y' ]; then
-    sed -i '1i\CFLAGS= -march=i686' src/Makefile
-    sed -i 's@^OPT=.*@OPT=-O2 -march=i686@' src/.make-settings
-  fi
   make -j ${THREAD}
   if [ -f "src/redis-server" ]; then
     mkdir -p ${redis_install_dir}/{bin,etc,var}
@@ -36,23 +32,16 @@ Install_redis_server() {
     [ $? -ne 0 ] && useradd -M -s /sbin/nologin redis
     chown -R redis:redis ${redis_install_dir}/{var,etc}
 
-    if [ -e /bin/systemctl ]; then
-      /bin/cp ../init.d/redis-server.service /lib/systemd/system/
-      sed -i "s@/usr/local/redis@${redis_install_dir}@g" /lib/systemd/system/redis-server.service
-      systemctl enable redis-server
-    else
-      /bin/cp ../init.d/Redis-server-init /etc/init.d/redis-server
-      sed -i "s@/usr/local/redis@${redis_install_dir}@g" /etc/init.d/redis-server
-      [ "${PM}" == 'yum' ] && { cc start-stop-daemon.c -o /sbin/start-stop-daemon; chkconfig --add redis-server; chkconfig redis-server on; }
-      [ "${PM}" == 'apt-get' ] && update-rc.d redis-server defaults
-    fi
+    /bin/cp ../init.d/redis-server.service /lib/systemd/system/
+    sed -i "s@/usr/local/redis@${redis_install_dir}@g" /lib/systemd/system/redis-server.service
+    systemctl enable redis-server
     #[ -z "`grep 'vm.overcommit_memory' /etc/sysctl.conf`" ] && echo 'vm.overcommit_memory = 1' >> /etc/sysctl.conf
     #sysctl -p
-    service redis-server start
+    systemctl start redis-server
   else
     rm -rf ${redis_install_dir}
-    echo "${CFAILURE}Redis-server install failed, Please contact the author! ${CEND}" && lsb_release -a
-    kill -9 $$
+    echo "${CFAILURE}Redis-server install failed, Please contact the author! ${CEND}" && grep -Ew 'NAME|ID|ID_LIKE|VERSION_ID|PRETTY_NAME' /etc/os-release
+    kill -9 $$; exit 1;
   fi
   popd > /dev/null
 }
@@ -62,8 +51,11 @@ Install_pecl_redis() {
     pushd ${oneinstack_dir}/src > /dev/null
     phpExtensionDir=`${php_install_dir}/bin/php-config --extension-dir`
     if [ "$(${php_install_dir}/bin/php-config --version | awk -F. '{print $1}')" == '5' ]; then
-      tar xzf redis-${pecl_redis_oldver}.tgz
-      pushd redis-${pecl_redis_oldver} > /dev/null
+      tar xzf redis-4.3.0.tgz
+      pushd redis-4.3.0 > /dev/null
+    elif [[ "$(${php_install_dir}/bin/php-config --version | awk -F. '{print $1$2}')" =~ ^7[0-1]$ ]]; then
+      tar xzf redis-5.3.7.tgz
+      pushd redis-5.3.7 > /dev/null
     else
       tar xzf redis-${pecl_redis_ver}.tgz
       pushd redis-${pecl_redis_ver} > /dev/null
@@ -75,9 +67,9 @@ Install_pecl_redis() {
     if [ -f "${phpExtensionDir}/redis.so" ]; then
       echo 'extension=redis.so' > ${php_install_dir}/etc/php.d/05-redis.ini
       echo "${CSUCCESS}PHP Redis module installed successfully! ${CEND}"
-      rm -rf redis-${pecl_redis_ver} redis-${pecl_redis_oldver}
+      rm -rf redis-${pecl_redis_ver} redis-4.3.0 redis-5.3.7
     else
-      echo "${CFAILURE}PHP Redis module install failed, Please contact the author! ${CEND}" && lsb_release -a
+      echo "${CFAILURE}PHP Redis module install failed, Please contact the author! ${CEND}" && grep -Ew 'NAME|ID|ID_LIKE|VERSION_ID|PRETTY_NAME' /etc/os-release
     fi
     popd > /dev/null
   fi

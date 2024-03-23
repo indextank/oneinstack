@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -12,7 +12,7 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 clear
 printf "
 #######################################################################
-#       OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+      #
+#       OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+      #
 #              Reset Database root password for OneinStack            #
 #       For more information please visit https://oneinstack.com      #
 #######################################################################
@@ -94,16 +94,16 @@ Reset_force_dbrootpwd() {
     sleep 1
   done
   echo "${CMSG}skip grant tables...${CEND}"
-  ${db_install_dir}/bin/mysqld_safe --skip-grant-tables > /dev/null 2>&1 &
-  sleep 5
+  sed -i '/\[mysqld\]/a\skip-grant-tables' /etc/my.cnf
+  service mysqld start > /dev/null 2>&1
+  sed -i '/^skip-grant-tables/d' /etc/my.cnf
   while [ -z "`ps -ef | grep 'mysqld ' | grep -v grep | awk '{print $2}'`" ]; do
     sleep 1
   done
-  if echo "${DB_Ver}" | grep -Eqi '^8.0.|^5.7.|^10.2.'; then
+  if echo "${DB_Ver}" | grep -Eqi '^8.0.|^5.7.|^10.[4-5].|^10.11.'; then
     ${db_install_dir}/bin/mysql -uroot -hlocalhost << EOF
+update mysql.user set authentication_string=password("${New_dbrootpwd}") where user="root";
 flush privileges;
-alter user 'root'@'localhost' identified by "${New_dbrootpwd}";
-alter user 'root'@'127.0.0.1' identified by "${New_dbrootpwd}";
 EOF
   else
     ${db_install_dir}/bin/mysql -uroot -hlocalhost << EOF

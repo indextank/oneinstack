@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -18,14 +18,17 @@ Install_pecl_ldap() {
     pushd php-${PHP_detail_ver}/ext/ldap > /dev/null
     if [ "${PM}" == 'yum' ]; then
       yum -y install openldap-devel
-      [ "${OS_BIT}" == '64' ] && With_libdir='--with-libdir=lib64'
     else
       apt-get -y install libldap2-dev
-      ln -s /usr/lib/${SYS_BIT_c}-linux-gnu/libldap.so /usr/lib/
-      ln -s /usr/lib/${SYS_BIT_c}-linux-gnu/liblber.so /usr/lib/
+      ln -s /usr/lib/${ARCH}-linux-gnu/libldap.so /usr/lib/
+      ln -s /usr/lib/${ARCH}-linux-gnu/liblber.so /usr/lib/
     fi
     ${php_install_dir}/bin/phpize
-    ./configure --with-php-config=${php_install_dir}/bin/php-config --with-ldap ${With_libdir}
+    if [ "${PM}" == 'yum' ]; then
+      ./configure --with-php-config=${php_install_dir}/bin/php-config --with-ldap --with-libdir=lib64
+    else
+      ./configure --with-php-config=${php_install_dir}/bin/php-config --with-ldap --with-libdir=lib/x86_64-linux-gnu
+    fi
     make -j ${THREAD} && make install
     popd > /dev/null
     if [ -f "${phpExtensionDir}/ldap.so" ]; then
@@ -33,7 +36,7 @@ Install_pecl_ldap() {
       echo "${CSUCCESS}PHP ldap module installed successfully! ${CEND}"
       rm -rf php-${PHP_detail_ver}
     else
-      echo "${CFAILURE}PHP ldap module install failed, Please contact the author! ${CEND}" && lsb_release -a
+      echo "${CFAILURE}PHP ldap module install failed, Please contact the author! ${CEND}" && grep -Ew 'NAME|ID|ID_LIKE|VERSION_ID|PRETTY_NAME' /etc/os-release
     fi
     popd > /dev/null
   fi

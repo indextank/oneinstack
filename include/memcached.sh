@@ -2,7 +2,7 @@
 # Author:  yeho <lj2007331 AT gmail.com>
 # BLOG:  https://linuxeye.com
 #
-# Notes: OneinStack for CentOS/RedHat 7+ Debian 8+ and Ubuntu 16+
+# Notes: OneinStack for CentOS/RedHat 7+ Debian 9+ and Ubuntu 16+
 #
 # Project home page:
 #       https://oneinstack.com
@@ -24,19 +24,14 @@ Install_memcached_server() {
     echo "${CSUCCESS}memcached installed successfully! ${CEND}"
     rm -rf memcached-${memcached_ver}
     ln -s ${memcached_install_dir}/bin/memcached /usr/bin/memcached
-    [ "${PM}" == 'yum' ] && { /bin/cp ../init.d/Memcached-init-CentOS /etc/init.d/memcached; chkconfig --add memcached; chkconfig memcached on; }
-    [ "${PM}" == 'apt-get' ] && { /bin/cp ../init.d/Memcached-init-Ubuntu /etc/init.d/memcached; update-rc.d memcached defaults; }
-    sed -i "s@/usr/local/memcached@${memcached_install_dir}@g" /etc/init.d/memcached
-    let memcachedCache="${Mem}/8"
-    [ -n "$(grep 'CACHESIZE=' /etc/init.d/memcached)" ] && sed -i "s@^CACHESIZE=.*@CACHESIZE=${memcachedCache}@" /etc/init.d/memcached
-    [ -n "$(grep 'start_instance default 256;' /etc/init.d/memcached)" ] && sed -i "s@start_instance default 256;@start_instance default ${memcachedCache};@" /etc/init.d/memcached
-    [ -e /bin/systemctl ] && systemctl daemon-reload
-    service memcached start
+    /bin/cp ../init.d/memcached.service /lib/systemd/system/
+    systemctl enable memcached
+    systemctl start memcached
     rm -rf memcached-${memcached_ver}
   else
     rm -rf ${memcached_install_dir}
-    echo "${CFAILURE}memcached-server install failed, Please contact the author! ${CEND}" && lsb_release -a
-    kill -9 $$
+    echo "${CFAILURE}memcached-server install failed, Please contact the author! ${CEND}" && grep -Ew 'NAME|ID|ID_LIKE|VERSION_ID|PRETTY_NAME' /etc/os-release
+    kill -9 $$; exit 1;
   fi
   popd > /dev/null
 }
@@ -48,6 +43,9 @@ Install_pecl_memcache() {
     PHP_detail_ver=$(${php_install_dir}/bin/php-config --version)
     PHP_main_ver=${PHP_detail_ver%.*}
     if [ "$(${php_install_dir}/bin/php-config --version | awk -F. '{print $1}')" == '5' ]; then
+      tar xzf memcache-3.0.8.tgz
+      pushd memcache-3.0.8 > /dev/null
+    elif [ "$(${php_install_dir}/bin/php-config --version | awk -F. '{print $1}')" == '7' ]; then
       tar xzf memcache-${pecl_memcache_oldver}.tgz
       pushd memcache-${pecl_memcache_oldver} > /dev/null
     else
@@ -62,9 +60,9 @@ Install_pecl_memcache() {
     if [ -f "${phpExtensionDir}/memcache.so" ]; then
       echo "extension=memcache.so" > ${php_install_dir}/etc/php.d/05-memcache.ini
       echo "${CSUCCESS}PHP memcache module installed successfully! ${CEND}"
-      rm -rf memcache-${pecl_memcache_ver} memcache-${pecl_memcache_oldver}
+      rm -rf memcache-${pecl_memcache_ver} memcache-${pecl_memcache_oldver} memcache-3.0.8
     else
-      echo "${CFAILURE}PHP memcache module install failed, Please contact the author! ${CEND}" && lsb_release -a
+      echo "${CFAILURE}PHP memcache module install failed, Please contact the author! ${CEND}" && grep -Ew 'NAME|ID|ID_LIKE|VERSION_ID|PRETTY_NAME' /etc/os-release
     fi
     popd > /dev/null
   fi
@@ -104,7 +102,7 @@ EOF
       echo "${CSUCCESS}PHP memcached module installed successfully! ${CEND}"
       rm -rf memcached-${pecl_memcached_oldver} memcached-${pecl_memcached_ver}
     else
-      echo "${CFAILURE}PHP memcached module install failed, Please contact the author! ${CEND}" && lsb_release -a
+      echo "${CFAILURE}PHP memcached module install failed, Please contact the author! ${CEND}" && grep -Ew 'NAME|ID|ID_LIKE|VERSION_ID|PRETTY_NAME' /etc/os-release
     fi
     popd > /dev/null
   fi
