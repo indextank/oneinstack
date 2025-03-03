@@ -120,12 +120,9 @@ checkDownload() {
       1)
         # MySQL 8.0
         if [ "${OUTIP_STATE}"x == "China"x ]; then
-          DOWN_ADDR_MYSQL=https://cdn.mysql.com/Downloads/MySQL-8.0
-          DOWN_ADDR_MYSQL_BK=https://mirrors.aliyun.com/mysql/MySQL-8.0
-          DOWN_ADDR_MYSQL_BK2=http://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/MySQL-8.0
+          DOWN_ADDR_MYSQL=https://mirrors.oneinstack.com/oneinstack/src/
         else
-          DOWN_ADDR_MYSQL=https://cdn.mysql.com/Downloads/MySQL-8.0
-          DOWN_ADDR_MYSQL_BK=https://mirrors.dotsrc.org/mysql/Downloads/MySQL-8.0
+          DOWN_ADDR_MYSQL=https://mirrors.oneinstack.com/oneinstack/src/
         fi
 
         if [ "${dbinstallmethod}" == '1' ]; then
@@ -283,11 +280,11 @@ checkDownload() {
         fi
 
         if [ "${OUTIP_STATE}"x == "China"x ]; then
-          DOWN_ADDR_MARIADB=http://mirrors.tuna.tsinghua.edu.cn/mariadb/mariadb-${mariadb_ver}/${FILE_TYPE}
+          DOWN_ADDR_MARIADB=${mirror_link}/oneinstack/src/mariadb/mariadb-${mariadb_ver}/${FILE_TYPE}
           DOWN_ADDR_MARIADB_BK=http://mirrors.ustc.edu.cn/mariadb/mariadb-${mariadb_ver}/${FILE_TYPE}
         else
-          DOWN_ADDR_MARIADB=https://archive.mariadb.org/mariadb-${mariadb_ver}/${FILE_TYPE}
-          DOWN_ADDR_MARIADB_BK=http://mirror.nodesdirect.com/mariadb/mariadb-${mariadb_ver}/${FILE_TYPE}
+          DOWN_ADDR_MARIADB=${mirror_link}/oneinstack/src/mariadb/mariadb-${mariadb_ver}/${FILE_TYPE}
+          DOWN_ADDR_MARIADB_BK=${mirror_link}/oneinstack/src/mariadb/mariadb-${mariadb_ver}/${FILE_TYPE}
         fi
 
         if [ "${db_option}" == '8' ]; then
@@ -521,35 +518,35 @@ checkDownload() {
   elif [ "${php_option}" == '6' ] || [ "${mphp_ver}" == '71' ]; then
     src_url=https://secure.php.net/distributions/php-${php71_ver}.tar.gz && Download_src
   elif [ "${php_option}" == '7' ] || [ "${mphp_ver}" == '72' ]; then
-    src_url=https://secure.php.net/distributions/php-${php72_ver}.tar.gz && Download_src
+    src_url=${mirror_link}/oneinstack/src/php-${php72_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/argon2-${argon2_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libsodium-${libsodium_ver}.tar.gz && Download_src
   elif [ "${php_option}" == '8' ] || [ "${mphp_ver}" == '73' ]; then
-    src_url=https://secure.php.net/distributions/php-${php73_ver}.tar.gz && Download_src
+    src_url=${mirror_link}/oneinstack/src/php-${php73_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/argon2-${argon2_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libsodium-${libsodium_ver}.tar.gz && Download_src
   elif [ "${php_option}" == '9' ] || [ "${mphp_ver}" == '74' ]; then
-    src_url=https://secure.php.net/distributions/php-${php74_ver}.tar.gz && Download_src
+    src_url=${mirror_link}/oneinstack/src/php-${php74_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/argon2-${argon2_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libsodium-${libsodium_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libzip-${libzip_ver}.tar.gz && Download_src
   elif [ "${php_option}" == '10' ] || [ "${mphp_ver}" == '80' ]; then
-    src_url=https://secure.php.net/distributions/php-${php80_ver}.tar.gz && Download_src
+    src_url=${mirror_link}/oneinstack/src/php-${php80_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/argon2-${argon2_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libsodium-${libsodium_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libzip-${libzip_ver}.tar.gz && Download_src
   elif [ "${php_option}" == '11' ] || [ "${mphp_ver}" == '81' ]; then
-    src_url=https://secure.php.net/distributions/php-${php81_ver}.tar.gz && Download_src
+    src_url=${mirror_link}/oneinstack/src/php-${php81_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/argon2-${argon2_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libsodium-${libsodium_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libzip-${libzip_ver}.tar.gz && Download_src
   elif [ "${php_option}" == '12' ] || [ "${mphp_ver}" == '82' ]; then
-    src_url=https://secure.php.net/distributions/php-${php82_ver}.tar.gz && Download_src
+    src_url=${mirror_link}/oneinstack/src/php-${php82_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/argon2-${argon2_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libsodium-${libsodium_up_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libzip-${libzip_ver}.tar.gz && Download_src
   elif [ "${php_option}" == '13' ] || [ "${mphp_ver}" == '83' ]; then
-    src_url=https://secure.php.net/distributions/php-${php83_ver}.tar.gz && Download_src
+    src_url=${mirror_link}/oneinstack/src/php-${php83_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/argon2-${argon2_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libsodium-${libsodium_up_ver}.tar.gz && Download_src
     src_url=${mirror_link}/oneinstack/src/libzip-${libzip_ver}.tar.gz && Download_src
